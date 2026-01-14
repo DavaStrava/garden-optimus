@@ -1,0 +1,42 @@
+import { auth } from "@/lib/auth";
+import { redirect, notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { Header } from "@/components/header";
+import { PlantForm } from "@/components/plant-form";
+
+export default async function EditPlantPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const session = await auth();
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  const { id } = await params;
+
+  const [plant, species] = await Promise.all([
+    prisma.plant.findFirst({
+      where: { id, userId: session.user.id },
+    }),
+    prisma.plantSpecies.findMany({
+      orderBy: { commonName: "asc" },
+    }),
+  ]);
+
+  if (!plant) {
+    notFound();
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Header />
+      <main className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">Edit Plant</h1>
+        <PlantForm species={species} plant={plant} />
+      </main>
+    </div>
+  );
+}
