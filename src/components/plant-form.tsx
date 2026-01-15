@@ -46,10 +46,11 @@ export function PlantForm({ species, plant }: PlantFormProps) {
     setError(null);
 
     const formData = new FormData(e.currentTarget);
+    const speciesValue = formData.get("speciesId") as string;
     const data = {
       name: formData.get("name") as string,
       nickname: formData.get("nickname") as string || null,
-      speciesId: formData.get("speciesId") as string || null,
+      speciesId: speciesValue && speciesValue !== "none" ? speciesValue : null,
       location: formData.get("location") as "INDOOR" | "OUTDOOR",
       area: formData.get("area") as string || null,
       acquiredAt: formData.get("acquiredAt") as string || null,
@@ -118,12 +119,12 @@ export function PlantForm({ species, plant }: PlantFormProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="speciesId">Species</Label>
-              <Select name="speciesId" defaultValue={plant?.speciesId || ""}>
+              <Select name="speciesId" defaultValue={plant?.speciesId || "none"}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a species (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None selected</SelectItem>
+                  <SelectItem value="none">None selected</SelectItem>
                   {species.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
                       {s.commonName}
