@@ -48,35 +48,49 @@ model VerificationToken {
 
 // Application models
 model User {
-  id            String    @id @default(cuid())
+  id            String        @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?       @unique
   emailVerified DateTime?
   image         String?
   accounts      Account[]
   sessions      Session[]
   plants        Plant[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  location      UserLocation?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model UserLocation {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @unique
+  latitude  Float
+  longitude Float
+  city      String?
+  country   String?
+  timezone  String?
+  updatedAt DateTime @updatedAt
 }
 
 model Plant {
-  id          String            @id @default(cuid())
-  name        String
-  nickname    String?
-  species     PlantSpecies?     @relation(fields: [speciesId], references: [id])
-  speciesId   String?
-  location    PlantLocation
-  area        String?
-  acquiredAt  DateTime?
-  notes       String?
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
-  photos      PlantPhoto[]
-  careLogs    CareLog[]
-  assessments HealthAssessment[]
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id            String             @id @default(cuid())
+  name          String
+  nickname      String?
+  species       PlantSpecies?      @relation(fields: [speciesId], references: [id])
+  speciesId     String?
+  location      PlantLocation
+  area          String?
+  acquiredAt    DateTime?
+  notes         String?
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  photos        PlantPhoto[]
+  careLogs      CareLog[]
+  assessments   HealthAssessment[]
+  careSchedules CareSchedule[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
 }
 
 enum PlantLocation {
@@ -115,6 +129,22 @@ model CareLog {
   amount   String?
   notes    String?
   loggedAt DateTime @default(now())
+}
+
+model CareSchedule {
+  id           String    @id @default(cuid())
+  plant        Plant     @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  plantId      String
+  careType     CareType
+  intervalDays Int
+  nextDueDate  DateTime
+  lastCaredAt  DateTime?
+  enabled      Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([plantId, careType])
+  @@index([nextDueDate])
 }
 
 enum CareType {

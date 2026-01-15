@@ -6,6 +6,11 @@ import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { LocationPrompt } from "@/components/location-prompt";
+import { CareAlerts } from "@/components/care-alerts";
+import { WeatherCard } from "@/components/weather-card";
+import { WeatherAlerts } from "@/components/weather-alerts";
+import { SeasonalTips } from "@/components/seasonal-tips";
 
 export default async function Home() {
   const session = await auth();
@@ -14,7 +19,15 @@ export default async function Home() {
     redirect("/login");
   }
 
-  const [plants, recentCareLogs, recentAssessments] = await Promise.all([
+  const [
+    plants,
+    recentCareLogs,
+    recentAssessments,
+    userLocation,
+    totalPlants,
+    indoorCount,
+    outdoorCount,
+  ] = await Promise.all([
     prisma.plant.findMany({
       where: { userId: session.user.id },
       include: {
@@ -37,19 +50,19 @@ export default async function Home() {
       orderBy: { assessedAt: "desc" },
       take: 3,
     }),
+    prisma.userLocation.findUnique({
+      where: { userId: session.user.id },
+    }),
+    prisma.plant.count({
+      where: { userId: session.user.id },
+    }),
+    prisma.plant.count({
+      where: { userId: session.user.id, location: "INDOOR" },
+    }),
+    prisma.plant.count({
+      where: { userId: session.user.id, location: "OUTDOOR" },
+    }),
   ]);
-
-  const totalPlants = await prisma.plant.count({
-    where: { userId: session.user.id },
-  });
-
-  const indoorCount = await prisma.plant.count({
-    where: { userId: session.user.id, location: "INDOOR" },
-  });
-
-  const outdoorCount = await prisma.plant.count({
-    where: { userId: session.user.id, location: "OUTDOOR" },
-  });
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -62,6 +75,18 @@ export default async function Home() {
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             Here&apos;s an overview of your garden
           </p>
+        </div>
+
+        {/* Location Prompt (if not set) */}
+        {!userLocation && (
+          <div className="mb-6">
+            <LocationPrompt />
+          </div>
+        )}
+
+        {/* Weather Alerts */}
+        <div className="mb-6">
+          <WeatherAlerts />
         </div>
 
         {/* Stats */}
@@ -84,6 +109,11 @@ export default async function Home() {
               <CardTitle className="text-4xl">{outdoorCount}</CardTitle>
             </CardHeader>
           </Card>
+        </div>
+
+        {/* Care Alerts */}
+        <div className="mb-8">
+          <CareAlerts />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -145,9 +175,13 @@ export default async function Home() {
             )}
           </div>
 
-          {/* Recent Activity */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
+          {/* Sidebar: Weather & Activity */}
+          <div className="space-y-6">
+            {/* Weather & Seasonal Tips */}
+            <WeatherCard />
+            <SeasonalTips />
+
+            <h2 className="text-xl font-semibold">Recent Activity</h2>
             <Card>
               <CardContent className="py-4">
                 {recentCareLogs.length > 0 || recentAssessments.length > 0 ? (

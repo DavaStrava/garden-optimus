@@ -29,22 +29,54 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Plant not found" }, { status: 404 });
     }
 
-    const careLog = await prisma.careLog.create({
-      data: {
-        plantId,
-        type,
-        amount: amount || null,
-        notes: notes || null,
-      },
+    // Use transaction to ensure all updates succeed or fail together
+    const result = await prisma.$transaction(async (tx) => {
+      // Create care log
+      const careLog = await tx.careLog.create({
+        data: {
+          plantId,
+          type,
+          amount: amount || null,
+          notes: notes || null,
+        },
+      });
+
+      // Update plant's updatedAt
+      await tx.plant.update({
+        where: { id: plantId },
+        data: { updatedAt: new Date() },
+      });
+
+      // Update care schedule if one exists for this care type
+      const existingSchedule = await tx.careSchedule.findUnique({
+        where: {
+          plantId_careType: {
+            plantId,
+            careType: type,
+          },
+        },
+      });
+
+      if (existingSchedule) {
+        const now = new Date();
+        const nextDueDate = new Date(
+          now.getTime() + existingSchedule.intervalDays * 24 * 60 * 60 * 1000
+        );
+        nextDueDate.setHours(0, 0, 0, 0); // Reset to start of day
+
+        await tx.careSchedule.update({
+          where: { id: existingSchedule.id },
+          data: {
+            lastCaredAt: now,
+            nextDueDate,
+          },
+        });
+      }
+
+      return careLog;
     });
 
-    // Update plant's updatedAt
-    await prisma.plant.update({
-      where: { id: plantId },
-      data: { updatedAt: new Date() },
-    });
-
-    return NextResponse.json(careLog, { status: 201 });
+    return NextResponse.json(result, { status: 201 });
   } catch (error) {
     console.error("Error creating care log:", error);
     return NextResponse.json(

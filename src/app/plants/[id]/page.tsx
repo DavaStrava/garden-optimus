@@ -12,6 +12,9 @@ import { CareLogForm } from "@/components/care-log-form";
 import { DeletePlantButton } from "@/components/delete-plant-button";
 import { PhotoUpload } from "@/components/photo-upload";
 import { HealthAssessmentButton } from "@/components/health-assessment-button";
+import { CareScheduleForm } from "@/components/care-schedule-form";
+import { ReminderStatusBadge } from "@/components/reminder-status-badge";
+import { getReminderStatus } from "@/lib/care-reminders";
 
 export default async function PlantDetailPage({
   params,
@@ -33,12 +36,19 @@ export default async function PlantDetailPage({
       photos: { orderBy: { createdAt: "desc" } },
       careLogs: { orderBy: { loggedAt: "desc" } },
       assessments: { orderBy: { assessedAt: "desc" } },
+      careSchedules: { orderBy: { careType: "asc" } },
     },
   });
 
   if (!plant) {
     notFound();
   }
+
+  // Calculate status for each schedule
+  const schedulesWithStatus = plant.careSchedules.map((schedule) => ({
+    ...schedule,
+    statusInfo: getReminderStatus(schedule.nextDueDate),
+  }));
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -196,6 +206,51 @@ export default async function PlantDetailPage({
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Care Schedules */}
+            <CareScheduleForm
+              plantId={plant.id}
+              existingSchedules={plant.careSchedules.map((s) => ({
+                id: s.id,
+                careType: s.careType,
+                intervalDays: s.intervalDays,
+                enabled: s.enabled,
+              }))}
+            />
+
+            {/* Upcoming Care - only show if schedules exist */}
+            {schedulesWithStatus.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Upcoming Care</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {schedulesWithStatus
+                    .filter((s) => s.enabled)
+                    .map((schedule) => (
+                      <div
+                        key={schedule.id}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <span>
+                          {schedule.careType === "WATERING" && "💧 "}
+                          {schedule.careType === "FERTILIZING" && "🌿 "}
+                          {schedule.careType === "REPOTTING" && "🪴 "}
+                          {schedule.careType === "PRUNING" && "✂️ "}
+                          {schedule.careType === "PEST_TREATMENT" && "🐛 "}
+                          {schedule.careType === "OTHER" && "📝 "}
+                          {schedule.careType.charAt(0) +
+                            schedule.careType.slice(1).toLowerCase().replace("_", " ")}
+                        </span>
+                        <ReminderStatusBadge
+                          status={schedule.statusInfo.status}
+                          label={schedule.statusInfo.label}
+                        />
+                      </div>
+                    ))}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Plant Info */}
             <Card>
               <CardHeader>
