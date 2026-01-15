@@ -2,6 +2,9 @@ import { auth, signIn } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+
+const isDev = process.env.NODE_ENV === "development";
 
 export default async function LoginPage() {
   const session = await auth();
@@ -21,6 +24,33 @@ export default async function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {isDev && (
+            <>
+              <form
+                action={async () => {
+                  "use server";
+                  await signIn("credentials", {
+                    email: "dev@garden-optimus.local",
+                    redirectTo: "/",
+                  });
+                }}
+              >
+                <Button className="w-full bg-green-600 hover:bg-green-700" type="submit">
+                  Dev Login (No OAuth Required)
+                </Button>
+              </form>
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <Separator className="w-full" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">
+                    Or continue with
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
           <form
             action={async () => {
               "use server";

@@ -31,6 +31,7 @@ src/
 │   └── *.tsx             # App-specific components
 ├── lib/                   # Utilities
 │   ├── auth.ts           # NextAuth configuration
+│   ├── auth-utils.ts     # Auth helper functions (testable)
 │   ├── prisma.ts         # Prisma client singleton
 │   ├── ai.ts             # Claude API integration
 │   └── utils.ts          # General utilities
@@ -41,7 +42,8 @@ prisma/
 ```
 
 ## Key Files
-- `src/lib/auth.ts` - NextAuth configuration with Google/GitHub OAuth
+- `src/lib/auth.ts` - NextAuth configuration with Google/GitHub OAuth + dev bypass
+- `src/lib/auth-utils.ts` - Auth helper functions (platform detection, email validation)
 - `src/lib/prisma.ts` - Prisma client singleton for database access
 - `src/lib/ai.ts` - Claude Vision API integration for plant health assessment
 - `prisma/schema.prisma` - Database models (User, Plant, CareLog, HealthAssessment, PlantSpecies, PlantPhoto)
@@ -87,7 +89,33 @@ GOOGLE_CLIENT_SECRET=...
 GITHUB_CLIENT_ID=...
 GITHUB_CLIENT_SECRET=...
 ANTHROPIC_API_KEY=...
+
+# Optional: Enable dev authentication (local development only)
+ENABLE_DEV_AUTH=true
 ```
+
+## Development Authentication
+
+For local development without OAuth setup, a dev login bypass is available.
+
+### Enable Dev Auth
+Add to `.env.local`:
+```
+ENABLE_DEV_AUTH=true
+```
+
+### How It Works
+1. Go to `/login` and click "Dev Login (No OAuth Required)"
+2. Creates/uses a dev user: `dev@garden-optimus.local`
+3. Only works when ALL conditions are met:
+   - `NODE_ENV=development`
+   - `ENABLE_DEV_AUTH=true`
+   - Not on production platforms (Vercel, Railway, Render, Heroku, AWS Lambda, Netlify)
+
+### Security
+- Dev auth is **never** available in production
+- Only `@garden-optimus.local` emails are accepted
+- Multiple safeguards prevent accidental production exposure
 
 ## Code Patterns
 
@@ -156,6 +184,12 @@ npx shadcn@latest add [component-name]
 Place test files next to the code they test:
 - `src/components/Button.tsx` → `src/components/Button.test.tsx`
 - `src/lib/utils.ts` → `src/lib/utils.test.ts`
+
+### Existing Tests
+- `src/lib/utils.test.ts` - Utility function tests (6 tests)
+- `src/lib/auth-utils.test.ts` - Auth helper tests (32 tests)
+- `src/components/care-log-form.test.tsx` - Care log form tests (5 tests)
+- `src/components/delete-plant-button.test.tsx` - Delete button tests (5 tests)
 
 ### Mock Data Helpers
 Available in `src/test/utils.tsx`:
