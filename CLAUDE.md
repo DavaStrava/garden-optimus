@@ -46,8 +46,29 @@ prisma/
 - `src/lib/auth-utils.ts` - Auth helper functions (platform detection, email validation)
 - `src/lib/prisma.ts` - Prisma client singleton for database access
 - `src/lib/ai.ts` - Claude Vision API integration for plant health assessment
-- `prisma/schema.prisma` - Database models (User, Plant, CareLog, HealthAssessment, PlantSpecies, PlantPhoto)
-- `prisma/seed.ts` - Seed data with 50+ plant species
+- `prisma/schema.prisma` - Database models (User, Plant, CareLog, HealthAssessment, PlantSpecies, PlantPhoto, CareSchedule)
+- `prisma/seed.ts` - Seed data with 500 plant species (indoor, outdoor, Pacific Northwest natives, herbs, vegetables, and more)
+
+## Plant Species Library
+The PlantSpecies model serves as a comprehensive reference library with 500 species including:
+- Popular houseplants (Pothos, Monstera, Snake Plant, etc.)
+- Pacific Northwest natives (Sword Fern, Salal, Douglas Fir, etc.)
+- Outdoor plants (Rhododendron, Japanese Maple, Hydrangea, etc.)
+- Herbs and vegetables (Basil, Tomato, Kale, etc.)
+- Fruits and berries (Apple, Blueberry, Strawberry, etc.)
+
+### PlantSpecies Fields
+- **commonName** (required) - Display name (e.g., "Golden Pothos")
+- **scientificName** (optional) - Latin name (e.g., "Epipremnum aureum")
+- **description** (optional) - Detailed information about the plant's characteristics, growth habits, and general care overview. Displayed on species library page and plant detail care guide.
+- **lightNeeds** (required) - Light requirements (e.g., "Bright indirect light")
+- **waterFrequency** (required) - Watering schedule (e.g., "Weekly, when top inch is dry")
+- **humidity** (optional) - Humidity preferences (e.g., "Average to High")
+- **temperature** (optional) - Temperature range (e.g., "65-80°F")
+- **toxicity** (optional) - Safety information for pets/humans (e.g., "Toxic to pets")
+- **careNotes** (optional) - Additional care tips and notes
+- **imageUrl** (optional) - Reference image URL (not currently used)
+- **suitableFor** (required array) - INDOOR, OUTDOOR, or both
 
 ## Common Commands
 ```bash
@@ -73,10 +94,12 @@ npm run db:studio    # Open Prisma Studio
 Key models:
 - **User** - Authenticated users (NextAuth)
 - **Plant** - User's plants with name, location (INDOOR/OUTDOOR), species reference
-- **PlantSpecies** - Reference data for plant care (light, water, humidity, toxicity)
+- **PlantSpecies** - Reference library with 500 species including detailed descriptions and care requirements (commonName, scientificName, description, lightNeeds, waterFrequency, humidity, temperature, toxicity, careNotes, suitableFor)
 - **PlantPhoto** - Photos uploaded for each plant
 - **CareLog** - Care activities (WATERING, FERTILIZING, REPOTTING, PRUNING, PEST_TREATMENT, OTHER)
 - **HealthAssessment** - AI-generated health analysis results
+- **CareSchedule** - User-defined care reminders with intervals and due dates
+- **UserLocation** - User's geographic location for weather integration
 
 ## Environment Variables
 Required in `.env.local`:
@@ -159,6 +182,12 @@ Interactive components use `"use client"` directive:
 npx shadcn@latest add [component-name]
 ```
 
+### Adding/Updating Plant Species
+1. Edit `prisma/seed.ts` to add/modify species entries
+2. Run `npm run db:seed` to update the database
+3. Species data includes: commonName, scientificName, description, lightNeeds, waterFrequency, humidity, temperature, toxicity, careNotes, and suitableFor array
+4. Descriptions should be detailed paragraphs explaining the plant's characteristics and care overview
+
 ## Image Handling
 - Photos stored in `public/uploads/`
 - Filenames: `{plantId}-{timestamp}.{ext}`
@@ -171,6 +200,24 @@ npx shadcn@latest add [component-name]
 3. Server converts to base64, calls Claude Vision API
 4. Response parsed for health status, issues, recommendations
 5. Assessment saved to database with photo
+
+## Species Library UI
+The plant species library (`/species`) provides a searchable, filterable catalog of all 500 plant species:
+- **Search**: Search by common name or scientific name
+- **Filter**: Filter by Indoor, Outdoor, or All plants
+- **Display**: Each species card shows:
+  - Common name and scientific name
+  - Full description paragraph explaining the plant
+  - Suitability badges (Indoor/Outdoor)
+  - Light requirements
+  - Water frequency
+  - Humidity (if specified)
+  - Temperature (if specified)
+  - Toxicity/pet safety
+  - Care notes and tips
+  - Count of plants in user's garden (if any)
+
+Species information is also displayed in the plant detail page's "Care Guide" card, with the description shown at the top before specific care requirements.
 
 ## Testing
 

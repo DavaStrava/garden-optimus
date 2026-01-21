@@ -99,9 +99,10 @@ enum PlantLocation {
 }
 
 model PlantSpecies {
-  id             String  @id @default(cuid())
+  id             String          @id @default(cuid())
   commonName     String
   scientificName String?
+  description    String?
   lightNeeds     String
   waterFrequency String
   humidity       String?
@@ -109,6 +110,7 @@ model PlantSpecies {
   toxicity       String?
   careNotes      String?
   imageUrl       String?
+  suitableFor    PlantLocation[] // Indoor, outdoor, or both
   plants         Plant[]
 }
 

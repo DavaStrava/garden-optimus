@@ -288,6 +288,14 @@ export default async function PlantDetailPage({
                   <CardDescription>{plant.species.commonName}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {plant.species.description && (
+                    <div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                        {plant.species.description}
+                      </p>
+                      <Separator className="my-4" />
+                    </div>
+                  )}
                   <div>
                     <p className="text-sm text-gray-500">Light</p>
                     <p className="font-medium">{plant.species.lightNeeds}</p>

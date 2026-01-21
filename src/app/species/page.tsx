@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 export default async function SpeciesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string }>;
+  searchParams: Promise<{ search?: string; filter?: string }>;
 }) {
   const session = await auth();
 
@@ -19,16 +19,28 @@ export default async function SpeciesPage({
 
   const params = await searchParams;
   const searchQuery = params.search;
+  const filterQuery = params.filter; // "indoor", "outdoor", or undefined for all
 
   const species = await prisma.plantSpecies.findMany({
-    where: searchQuery
-      ? {
-          OR: [
-            { commonName: { contains: searchQuery, mode: "insensitive" } },
-            { scientificName: { contains: searchQuery, mode: "insensitive" } },
-          ],
-        }
-      : {},
+    where: {
+      AND: [
+        searchQuery
+          ? {
+              OR: [
+                { commonName: { contains: searchQuery, mode: "insensitive" } },
+                { scientificName: { contains: searchQuery, mode: "insensitive" } },
+              ],
+            }
+          : {},
+        filterQuery
+          ? {
+              suitableFor: {
+                has: filterQuery.toUpperCase() as "INDOOR" | "OUTDOOR",
+              },
+            }
+          : {},
+      ],
+    },
     orderBy: { commonName: "asc" },
     include: {
       _count: { select: { plants: true } },
@@ -46,8 +58,28 @@ export default async function SpeciesPage({
           </p>
         </div>
 
-        {/* Search */}
-        <div className="mb-6">
+        {/* Filters */}
+        <div className="mb-6 space-y-4">
+          <div className="flex gap-2">
+            <Badge
+              variant={!filterQuery ? "default" : "outline"}
+              className="cursor-pointer"
+            >
+              <a href="/species">All Plants</a>
+            </Badge>
+            <Badge
+              variant={filterQuery === "indoor" ? "default" : "outline"}
+              className="cursor-pointer"
+            >
+              <a href="/species?filter=indoor">Indoor</a>
+            </Badge>
+            <Badge
+              variant={filterQuery === "outdoor" ? "default" : "outline"}
+              className="cursor-pointer"
+            >
+              <a href="/species?filter=outdoor">Outdoor</a>
+            </Badge>
+          </div>
           <form className="max-w-md">
             <Input
               type="search"
@@ -55,6 +87,9 @@ export default async function SpeciesPage({
               placeholder="Search plants..."
               defaultValue={searchQuery}
             />
+            {filterQuery && (
+              <input type="hidden" name="filter" value={filterQuery} />
+            )}
           </form>
         </div>
 
@@ -63,23 +98,43 @@ export default async function SpeciesPage({
           {species.map((s) => (
             <Card key={s.id} className="h-full">
               <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
-                  <div>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1">
                     <CardTitle className="text-lg">{s.commonName}</CardTitle>
                     {s.scientificName && (
                       <CardDescription className="italic">
                         {s.scientificName}
                       </CardDescription>
                     )}
+                    {/* Suitability badges */}
+                    <div className="flex gap-1 mt-2">
+                      {s.suitableFor?.map((location) => (
+                        <Badge
+                          key={location}
+                          variant="outline"
+                          className="text-xs"
+                        >
+                          {location === "INDOOR" ? "🏠 Indoor" : "🌳 Outdoor"}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                   {s._count.plants > 0 && (
-                    <Badge variant="secondary">
+                    <Badge variant="secondary" className="shrink-0">
                       {s._count.plants} in your garden
                     </Badge>
                   )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
+                {s.description && (
+                  <div>
+                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                      {s.description}
+                    </p>
+                  </div>
+                )}
+                <div className="border-t pt-3"></div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <p className="text-gray-500 text-xs">Light</p>
