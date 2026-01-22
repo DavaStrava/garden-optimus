@@ -2,27 +2,12 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { assessPlantHealth } from "@/lib/ai";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-
-// Allowed image MIME types (must match Claude Vision supported types)
-const ALLOWED_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-];
-
-// Maximum file size: 5MB
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
-
-// Map MIME types to file extensions for safety
-const MIME_TO_EXT: Record<string, string> = {
-  "image/jpeg": ".jpg",
-  "image/png": ".png",
-  "image/webp": ".webp",
-  "image/gif": ".gif",
-};
+import {
+  uploadPhoto,
+  generatePhotoFilename,
+  validateImageFile,
+  ALLOWED_IMAGE_TYPES,
+} from "@/lib/storage";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -43,20 +28,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate file type
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    // Validate file (exclude HEIC for Claude Vision compatibility)
+    const allowedForVision = ALLOWED_IMAGE_TYPES.filter((t) => t !== "image/heic");
+    if (!allowedForVision.includes(file.type)) {
       return NextResponse.json(
         { error: "Invalid file type. Allowed: JPEG, PNG, WebP, GIF" },
         { status: 400 }
       );
     }
 
-    // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { error: "File too large. Maximum size is 5MB" },
-        { status: 400 }
-      );
+    const validationError = validateImageFile(file);
+    if (validationError && !validationError.includes("HEIC")) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
     // Verify plant ownership
@@ -68,7 +51,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Plant not found" }, { status: 404 });
     }
 
-    // Read file as buffer
+    // Read file as buffer once - reuse for both AI analysis and upload
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     const base64 = buffer.toString("base64");
@@ -87,16 +70,9 @@ export async function POST(request: Request) {
     // Get AI assessment
     const assessment = await assessPlantHealth(base64, mimeType);
 
-    // Save the photo
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    await mkdir(uploadsDir, { recursive: true });
-
-    // Use safe extension from MIME type
-    const ext = MIME_TO_EXT[file.type] || ".jpg";
-    const filename = `assessment-${plantId}-${Date.now()}${ext}`;
-    const filepath = path.join(uploadsDir, filename);
-    await writeFile(filepath, buffer);
-    const photoUrl = `/uploads/${filename}`;
+    // Upload photo using storage abstraction - pass buffer to avoid re-reading
+    const filename = generatePhotoFilename(plantId, file.type, "assessment-");
+    const photoUrl = await uploadPhoto(buffer, filename);
 
     // Save assessment to database
     const savedAssessment = await prisma.healthAssessment.create({

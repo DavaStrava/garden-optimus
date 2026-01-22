@@ -5,6 +5,7 @@ import GitHub from "next-auth/providers/github";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
 import { isDevAuthEnabled, isValidDevEmail } from "./auth-utils";
+import { isRegistrationOpen } from "./user-limit";
 
 const isDev = isDevAuthEnabled();
 
@@ -41,6 +42,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 return null;
               }
 
+              // Check if registration is open
+              const canRegister = await isRegistrationOpen(email);
+              if (!canRegister) {
+                console.warn("[DEV AUTH] Registration closed, user limit reached");
+                return null;
+              }
+
               // Find or create dev user
               let user = await prisma.user.findUnique({
                 where: { email },
@@ -71,6 +79,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/login",
   },
   callbacks: {
+    async signIn({ user, account }) {
+      // Skip check for credentials provider (already checked in authorize)
+      if (account?.provider === "credentials") {
+        return true;
+      }
+
+      // Check if registration is open for OAuth users
+      if (user.email) {
+        const canRegister = await isRegistrationOpen(user.email);
+        if (!canRegister) {
+          // Redirect to registration closed page
+          return "/registration-closed";
+        }
+      }
+
+      return true;
+    },
     jwt({ token, user }) {
       if (user) {
         token.id = user.id;

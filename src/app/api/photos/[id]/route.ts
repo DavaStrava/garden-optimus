@@ -1,8 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { deletePhoto } from "@/lib/storage";
 import { NextResponse } from "next/server";
-import { unlink } from "fs/promises";
-import path from "path";
 
 export async function DELETE(
   request: Request,
@@ -27,14 +26,11 @@ export async function DELETE(
       return NextResponse.json({ error: "Photo not found" }, { status: 404 });
     }
 
-    // Delete file from disk
-    if (photo.url.startsWith("/uploads/")) {
-      const filepath = path.join(process.cwd(), "public", photo.url);
-      try {
-        await unlink(filepath);
-      } catch (err) {
-        console.error("Error deleting file:", err);
-      }
+    // Delete file from storage
+    try {
+      await deletePhoto(photo.url);
+    } catch (err) {
+      console.error("Error deleting file from storage:", err);
     }
 
     // Delete from database

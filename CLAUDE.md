@@ -17,13 +17,15 @@ src/
 ├── app/                    # Next.js App Router pages and API routes
 │   ├── api/               # API endpoints
 │   │   ├── assessments/   # AI health assessment endpoint
-│   │   ├── auth/          # NextAuth handlers
+│   │   ├── auth/          # NextAuth handlers + registration check
 │   │   ├── care-logs/     # Care logging endpoint
+│   │   ├── health/        # Health check endpoint
 │   │   ├── photos/        # Photo management
 │   │   ├── plants/        # Plant CRUD operations
 │   │   └── upload/        # File upload endpoint
 │   ├── login/             # Login page
 │   ├── plants/            # Plant pages (list, detail, edit, new)
+│   ├── registration-closed/ # User limit reached page
 │   ├── species/           # Plant species library
 │   └── page.tsx           # Dashboard/home
 ├── components/            # React components
@@ -34,20 +36,31 @@ src/
 │   ├── auth-utils.ts     # Auth helper functions (testable)
 │   ├── prisma.ts         # Prisma client singleton
 │   ├── ai.ts             # Claude API integration
+│   ├── storage.ts        # File storage abstraction (local/Vercel Blob)
+│   ├── user-limit.ts     # User registration limit (10 users max)
+│   ├── rate-limit.ts     # In-memory rate limiting
 │   └── utils.ts          # General utilities
 └── types/                 # TypeScript type definitions
 prisma/
 ├── schema.prisma          # Database schema
 └── seed.ts               # Plant species seed data
+# Root config files
+├── sentry.client.config.ts # Sentry client-side config
+├── sentry.server.config.ts # Sentry server-side config
+└── sentry.edge.config.ts   # Sentry edge runtime config
 ```
 
 ## Key Files
-- `src/lib/auth.ts` - NextAuth configuration with Google/GitHub OAuth + dev bypass
+- `src/lib/auth.ts` - NextAuth configuration with Google/GitHub OAuth + dev bypass + user limit check
 - `src/lib/auth-utils.ts` - Auth helper functions (platform detection, email validation)
 - `src/lib/prisma.ts` - Prisma client singleton for database access
 - `src/lib/ai.ts` - Claude Vision API integration for plant health assessment
+- `src/lib/storage.ts` - File storage abstraction (Vercel Blob in production, local filesystem in dev)
+- `src/lib/user-limit.ts` - User registration limit enforcement (10 users max, admin override)
+- `src/lib/rate-limit.ts` - In-memory rate limiting for API endpoints
 - `prisma/schema.prisma` - Database models (User, Plant, CareLog, HealthAssessment, PlantSpecies, PlantPhoto, CareSchedule)
 - `prisma/seed.ts` - Seed data with 500 plant species (indoor, outdoor, Pacific Northwest natives, herbs, vegetables, and more)
+- `sentry.*.config.ts` - Sentry error monitoring configuration (client, server, edge)
 
 ## Plant Species Library
 The PlantSpecies model serves as a comprehensive reference library with 500 species including:
@@ -115,6 +128,18 @@ ANTHROPIC_API_KEY=...
 
 # Optional: Enable dev authentication (local development only)
 ENABLE_DEV_AUTH=true
+
+# Production: Vercel Blob Storage (auto-added when Blob Store is connected)
+BLOB_READ_WRITE_TOKEN=vercel_blob_...
+
+# Production: Error Monitoring (Sentry)
+SENTRY_DSN=https://...@sentry.io/...
+NEXT_PUBLIC_SENTRY_DSN=https://...@sentry.io/...
+SENTRY_ORG=your-org
+SENTRY_PROJECT=garden-optimus
+
+# Production: User Limit Admin Override
+ADMIN_EMAILS=admin@example.com,owner@example.com
 ```
 
 ## Development Authentication
@@ -139,6 +164,38 @@ ENABLE_DEV_AUTH=true
 - Dev auth is **never** available in production
 - Only `@garden-optimus.local` emails are accepted
 - Multiple safeguards prevent accidental production exposure
+
+## Production Infrastructure
+
+### User Registration Limit
+The app enforces a 10-user limit for early access:
+- `src/lib/user-limit.ts` - Core limit enforcement logic
+- `src/app/api/auth/check-registration/route.ts` - API to check if registration is open
+- `src/app/registration-closed/page.tsx` - Page shown when limit is reached
+- Admin emails (via `ADMIN_EMAILS` env var) can bypass the limit
+- Existing users can always sign in; limit only applies to new registrations
+
+### Rate Limiting
+API endpoints are protected with in-memory rate limiting:
+- `src/lib/rate-limit.ts` - Rate limit utility
+- Registration check: 10 requests per minute per IP
+- Returns `429 Too Many Requests` with `Retry-After` header when exceeded
+- Note: For multi-instance deployments, upgrade to Redis-based rate limiting
+
+### Error Monitoring (Sentry)
+Sentry is configured for production error tracking:
+- `sentry.client.config.ts` - Client-side errors + session replay
+- `sentry.server.config.ts` - Server-side errors
+- `sentry.edge.config.ts` - Edge runtime errors
+- 20% trace sampling in production (cost-effective)
+- 100% sampling in development
+- Disabled entirely when `NODE_ENV !== "production"`
+
+### Health Check Endpoint
+`/api/health` provides application health status:
+- **Unauthenticated**: Returns `{ status: "healthy", timestamp: "..." }`
+- **Authenticated**: Includes environment variable status (database, auth, AI, blob, etc.)
+- Returns `503` if database connection fails
 
 ## Code Patterns
 
@@ -189,10 +246,31 @@ npx shadcn@latest add [component-name]
 4. Descriptions should be detailed paragraphs explaining the plant's characteristics and care overview
 
 ## Image Handling
-- Photos stored in `public/uploads/`
+- **Development**: Photos stored locally in `public/uploads/`
+- **Production**: Photos stored in Vercel Blob Storage (CDN-backed)
+- Storage abstraction layer: `src/lib/storage.ts`
 - Filenames: `{plantId}-{timestamp}.{ext}`
 - Assessment photos prefixed with `assessment-`
-- Local storage (upgrade path to S3/R2 available)
+- Automatic environment detection via `VERCEL` env var
+
+### Storage Utilities (`src/lib/storage.ts`)
+```typescript
+import { uploadPhoto, deletePhoto, validateImageFile, generatePhotoFilename } from "@/lib/storage";
+
+// Upload a file or buffer
+const url = await uploadPhoto(file, "photo.jpg");
+const url = await uploadPhoto(buffer, "photo.jpg");
+
+// Delete a photo
+await deletePhoto(url);
+
+// Validate before upload
+const error = validateImageFile(file);
+if (error) return { error };
+
+// Generate unique filename
+const filename = generatePhotoFilename(plantId, file.type, "prefix-");
+```
 
 ## AI Health Assessment Flow
 1. User uploads photo via `HealthAssessmentButton`
