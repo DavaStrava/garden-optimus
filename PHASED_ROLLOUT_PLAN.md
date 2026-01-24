@@ -1,9 +1,35 @@
 # Phased Rollout Plan: Dashboard Enhancements & Push Notifications
 
 ## Overview
-Implementation of visual dashboard enhancements and push notification system for Garden Optimus, broken into 4 independent phases that build progressively from immediate user-facing improvements to full automated notifications.
+Implementation of visual dashboard enhancements and push notification system for Garden Optimus, broken into 5 phases (Prerequisites + Phases 0-4) that build progressively from infrastructure setup to full automated notifications.
 
-## Current State
+**Phase Order:**
+1. **Prerequisites** - Production infrastructure & deployment (makes app accessible on multiple devices)
+2. **Phase 0** - Plant Entry & AI Identification (core UX improvement)
+3. **Phase 1** - Enhanced Dashboard (visual improvements & quick actions)
+4. **Phase 2** - Notification Settings & Preferences (user preferences, in-app notifications)
+5. **Phase 3** - Push Notification Infrastructure (PWA, service workers, browser push)
+6. **Phase 4** - Automated Notifications & Daily Digest (cron jobs, scheduled reminders)
+
+## Current Progress
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| **Prerequisites** | ✅ Code Complete | Needs Vercel deployment + commit |
+| **Phase 0** | ✅ Code Complete | Needs commit |
+| **Phase 1** | ⬜ Not Started | Enhanced Dashboard |
+| **Phase 2** | ⬜ Not Started | Notification Settings |
+| **Phase 3** | ⬜ Not Started | Push Notifications |
+| **Phase 4** | ⬜ Not Started | Automated Notifications |
+
+**Next Steps:**
+1. Commit all current changes (Prerequisites + Phase 0)
+2. Deploy to Vercel (makes app accessible on multiple devices)
+3. Begin Phase 1: Enhanced Dashboard
+
+---
+
+## Existing Infrastructure (Before This Plan)
 - Dashboard shows 6 recent plants, CareAlerts component displays schedules due within 3 days
 - CareSchedule model has `nextDueDate` (indexed), `enabled`, `intervalDays`, `lastCaredAt` fields
 - API endpoint `/api/care-schedules` supports `?dueWithin=N` and `?status=overdue|due-today|due-soon|upcoming` filters
@@ -11,16 +37,14 @@ Implementation of visual dashboard enhancements and push notification system for
 - QuickCareButton exists for one-click care logging
 - UserLocation model has timezone field
 - PlantSpecies model has `description` field for additional context
-- **PlantForm exists but uses basic dropdown (poor UX for 50+ species), no AI identification**
-- **No background jobs, no PushSubscription model, no settings page, no PWA manifest**
 
 ---
 
----
-
-## Prerequisites: Before Phase 0
+## PREREQUISITES PHASE: Infrastructure & Deployment
 
 **CRITICAL: Complete these setup tasks BEFORE starting Phase 0 implementation.**
+
+**This phase makes the app accessible on multiple devices via `https://your-app.vercel.app`**
 
 ### Prerequisite 1: Production Database Setup (30 minutes)
 
@@ -544,9 +568,9 @@ DATABASE_URL="$(grep DATABASE_URL .env.production | cut -d '=' -f2-)" npx prisma
 
 ---
 
-### Prerequisite Checklist
+### Prerequisites Phase Checklist
 
-Before starting Phase 0 implementation, verify:
+Before starting Phase 0 implementation, verify all infrastructure is deployed:
 
 - [ ] **Database**: Vercel Postgres created, connected, seeded with species
 - [ ] **Blob Storage**: `@vercel/blob` installed, `storage.ts` abstraction created
@@ -1212,10 +1236,12 @@ model User {
 
 ---
 
-## Deployment & Production Setup (Vercel)
+## Deployment & Production Setup (Vercel) - Prerequisites Phase Details
 
 ### Overview
-Comprehensive guide for deploying Garden Optimus to Vercel for multi-device access via vercel.app subdomain.
+**This section provides detailed guidance for the Prerequisites Phase.**
+
+Comprehensive guide for deploying Garden Optimus to Vercel for multi-device access via vercel.app subdomain. Complete this BEFORE starting Phase 0.
 
 ### Prerequisites
 - GitHub account with Garden Optimus repository
@@ -1927,19 +1953,38 @@ if (userCount >= 10 && !isAdminEmail(email)) {
 
 ## Phase Summary
 
-| Phase | Duration | Risk | Value | Dependencies |
-|-------|----------|------|-------|--------------|
-| 0: Plant Entry & Identification | 1 week | Low | Critical | None |
-| 1: Enhanced Dashboard | 1-2 weeks | Low | High | Phase 0 (for testing) |
-| 2: Settings & Preferences | 1-2 weeks | Low-Medium | High | None |
-| 3: Push Notifications | 2-3 weeks | Medium | High | Phase 2 |
-| 4: Automated Notifications | 1-2 weeks | Medium | High | Phase 2, 3 |
+| Phase | Duration | Risk | Value | Dependencies | Multi-Device Access |
+|-------|----------|------|-------|--------------|---------------------|
+| **Prerequisites: Infrastructure & Deployment** | 3-4 hours | Low | Critical | None | **YES - Deploy to Vercel** |
+| 0: Plant Entry & Identification | 1 week | Low | Critical | Prerequisites | Inherited |
+| 1: Enhanced Dashboard | 1-2 weeks | Low | High | Phase 0 | Inherited |
+| 2: Settings & Preferences | 1-2 weeks | Low-Medium | High | None | Inherited |
+| 3: Push Notifications | 2-3 weeks | Medium | High | Phase 2 | PWA install for mobile |
+| 4: Automated Notifications | 1-2 weeks | Medium | High | Phase 2, 3 | Inherited |
 
-**Total: 6-10 weeks**
+**Total: 7-11 weeks**
+
+**Prerequisites Phase includes:**
+- Vercel Postgres database setup
+- Vercel Blob storage for photos
+- Sentry error monitoring
+- User limit enforcement (10 users max)
+- **Initial Vercel deployment** → App live at `https://your-app.vercel.app`
+- OAuth callback URL configuration
+- Database migrations & seeding
 
 ---
 
 ## Key Critical Files
+
+**Prerequisites Phase (Infrastructure & Deployment):**
+- `src/lib/storage.ts` - Blob storage abstraction (local dev vs Vercel Blob)
+- `src/lib/user-limit.ts` - 10-user registration limit enforcement
+- `src/lib/rate-limit.ts` - API rate limiting
+- `src/app/api/auth/check-registration/route.ts` - Registration status API
+- `src/app/registration-closed/page.tsx` - User limit reached page
+- `sentry.*.config.ts` - Error monitoring configuration
+- `vercel.json` - Vercel deployment configuration
 
 **Phase 0:**
 - `src/components/plant-form.tsx` - Replace dropdown with searchable combobox
@@ -1968,6 +2013,15 @@ if (userCount >= 10 && !isAdminEmail(email)) {
 ---
 
 ## Verification & Testing
+
+### Prerequisites Phase End-to-End Test (Deployment Verification)
+1. Visit `https://your-app.vercel.app` - app should load
+2. Check `/api/health` endpoint returns `{ status: "healthy" }`
+3. Test OAuth login with Google or GitHub
+4. Upload a plant photo - verify it's stored in Vercel Blob (URL starts with blob.vercel-storage.com)
+5. Check Sentry dashboard - verify errors are being tracked
+6. Test user limit: Try to register 11th user - should see "Registration Closed" page
+7. Access app from a different device (phone/tablet) - should work identically
 
 ### Phase 0 End-to-End Test
 1. Navigate to `/plants/new`
@@ -2021,8 +2075,9 @@ if (userCount >= 10 && !isAdminEmail(email)) {
 
 ## Implementation Notes
 
-- **START WITH CROSS-CUTTING CONCERNS**: Set up error monitoring and user limit enforcement BEFORE Phase 0
-- Each phase is independently deployable and testable
+- **START WITH PREREQUISITES PHASE**: Deploy to Vercel FIRST - this enables multi-device access and is required before Phase 0
+- **Prerequisites Phase** sets up: Vercel deployment, Postgres database, Blob storage, Sentry monitoring, user limits
+- Each subsequent phase is independently deployable and testable (auto-deploys on git push to main)
 - **Phase 0 is foundational** - improves core UX and enables proper testing of subsequent phases
 - All new code follows existing patterns (shadcn/ui, Server Components, Prisma)
 - Error handling: graceful degradation (AI identification fails → manual selection, push fails → in-app notification)
