@@ -14,15 +14,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-interface PlantSpecies {
-  id: string;
-  commonName: string;
-  scientificName: string | null;
-}
+import { SpeciesCombobox } from "@/components/species-combobox";
+import { SpeciesPreviewCard } from "@/components/species-preview-card";
+import { AIIdentifyButton } from "@/components/ai-identify-button";
+import type { SpeciesData } from "@/types/species";
 
 interface PlantFormProps {
-  species: PlantSpecies[];
+  species: SpeciesData[];
   plant?: {
     id: string;
     name: string;
@@ -39,6 +37,20 @@ export function PlantForm({ species, plant }: PlantFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedSpeciesId, setSelectedSpeciesId] = useState<string | null>(
+    plant?.speciesId || null
+  );
+  const [selectedSpecies, setSelectedSpecies] = useState<SpeciesData | null>(
+    plant?.speciesId ? species.find((s) => s.id === plant.speciesId) || null : null
+  );
+  const [location, setLocation] = useState<"INDOOR" | "OUTDOOR">(
+    plant?.location || "INDOOR"
+  );
+
+  // Controlled state for auto-population
+  const [plantName, setPlantName] = useState<string>(plant?.name || "");
+  const [personalName, setPersonalName] = useState<string>(plant?.nickname || "");
+  const [locationLocked, setLocationLocked] = useState<boolean>(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -46,15 +58,14 @@ export function PlantForm({ species, plant }: PlantFormProps) {
     setError(null);
 
     const formData = new FormData(e.currentTarget);
-    const speciesValue = formData.get("speciesId") as string;
     const data = {
-      name: formData.get("name") as string,
-      nickname: formData.get("nickname") as string || null,
-      speciesId: speciesValue && speciesValue !== "none" ? speciesValue : null,
-      location: formData.get("location") as "INDOOR" | "OUTDOOR",
-      area: formData.get("area") as string || null,
-      acquiredAt: formData.get("acquiredAt") as string || null,
-      notes: formData.get("notes") as string || null,
+      name: plantName,
+      nickname: personalName || null,
+      speciesId: selectedSpeciesId,
+      location: location,
+      area: (formData.get("area") as string) || null,
+      acquiredAt: (formData.get("acquiredAt") as string) || null,
+      notes: (formData.get("notes") as string) || null,
     };
 
     try {
@@ -82,17 +93,96 @@ export function PlantForm({ species, plant }: PlantFormProps) {
     }
   };
 
+  // Auto-populate form fields based on selected species (for new plants only)
+  const applyAutoPopulation = (speciesData: SpeciesData | null) => {
+    if (!speciesData) {
+      setLocationLocked(false);
+      return;
+    }
+
+    if (!plant) {
+      // Auto-populate plant name if empty
+      if (!plantName) {
+        setPlantName(speciesData.commonName);
+      }
+
+      // Auto-set location based on suitableFor
+      const suitableFor = speciesData.suitableFor || [];
+      if (suitableFor.length === 1) {
+        setLocation(suitableFor[0]);
+        setLocationLocked(true);
+      } else {
+        setLocationLocked(false);
+      }
+    }
+  };
+
+  const handleSpeciesChange = (
+    speciesId: string | null,
+    speciesData: SpeciesData | null
+  ) => {
+    setSelectedSpeciesId(speciesId);
+    setSelectedSpecies(speciesData);
+    applyAutoPopulation(speciesData);
+  };
+
+  const handleAISpeciesSelect = (
+    speciesId: string,
+    speciesData: SpeciesData
+  ) => {
+    setSelectedSpeciesId(speciesId);
+    setSelectedSpecies(speciesData);
+    applyAutoPopulation(speciesData);
+  };
+
   return (
     <Card className="max-w-2xl">
       <CardHeader>
-        <CardTitle>{plant ? "Edit Plant" : "Plant Details"}</CardTitle>
+        <CardTitle>{plant ? "Edit Plant" : "Add New Plant"}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">{error}</div>
+            <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
+              {error}
+            </div>
           )}
 
+          {/* Hero Section: Species Selection (Primary Action) */}
+          <div className="p-4 bg-muted/50 rounded-lg border-2 border-dashed border-muted-foreground/25">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">What kind of plant is this?</Label>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    Search or use AI to identify your plant
+                  </p>
+                </div>
+                <AIIdentifyButton
+                  onSpeciesSelect={handleAISpeciesSelect}
+                  onSkip={() => {
+                    setSelectedSpeciesId(null);
+                    setSelectedSpecies(null);
+                    setLocationLocked(false);
+                  }}
+                />
+              </div>
+              <SpeciesCombobox
+                value={selectedSpeciesId}
+                onValueChange={handleSpeciesChange}
+                initialSpecies={species}
+                // Don't filter by location - show all species so users can find what they're looking for
+                // Location will auto-populate based on species.suitableFor after selection
+              />
+            </div>
+          </div>
+
+          {/* Species Preview Card (Expanded) */}
+          {selectedSpecies && (
+            <SpeciesPreviewCard species={selectedSpecies} />
+          )}
+
+          {/* Plant Name and Personal Name */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Plant Name *</Label>
@@ -100,44 +190,45 @@ export function PlantForm({ species, plant }: PlantFormProps) {
                 id="name"
                 name="name"
                 required
-                defaultValue={plant?.name}
-                placeholder="e.g., My Monstera"
+                value={plantName}
+                onChange={(e) => setPlantName(e.target.value)}
+                placeholder="e.g., Golden Pothos"
               />
+              <p className="text-xs text-muted-foreground">
+                Auto-filled from species, customize if you like
+              </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="nickname">Nickname</Label>
+              <Label htmlFor="nickname">Personal Name</Label>
               <Input
                 id="nickname"
                 name="nickname"
-                defaultValue={plant?.nickname || ""}
-                placeholder="e.g., Monty"
+                value={personalName}
+                onChange={(e) => setPersonalName(e.target.value)}
+                placeholder="e.g., Monty, Leafy, Fernando"
               />
+              <p className="text-xs text-muted-foreground">
+                Give your plant a pet name (optional)
+              </p>
             </div>
           </div>
 
+          {/* Location and Area */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="speciesId">Species</Label>
-              <Select name="speciesId" defaultValue={plant?.speciesId || "none"}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a species (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None selected</SelectItem>
-                  {species.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.commonName}
-                      {s.scientificName && ` (${s.scientificName})`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="location">Location *</Label>
-              <Select name="location" defaultValue={plant?.location || "INDOOR"} required>
+              <Select
+                name="location"
+                value={location}
+                onValueChange={(value) => {
+                  if (!locationLocked) {
+                    setLocation(value as "INDOOR" | "OUTDOOR");
+                  }
+                }}
+                disabled={locationLocked}
+                required
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select location" />
                 </SelectTrigger>
@@ -146,10 +237,13 @@ export function PlantForm({ species, plant }: PlantFormProps) {
                   <SelectItem value="OUTDOOR">Outdoor</SelectItem>
                 </SelectContent>
               </Select>
+              {locationLocked && (
+                <p className="text-xs text-muted-foreground">
+                  This species is {location.toLowerCase()}-only
+                </p>
+              )}
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="area">Area/Room</Label>
               <Input
@@ -159,22 +253,24 @@ export function PlantForm({ species, plant }: PlantFormProps) {
                 placeholder="e.g., Living Room, Backyard"
               />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="acquiredAt">Date Acquired</Label>
-              <Input
-                id="acquiredAt"
-                name="acquiredAt"
-                type="date"
-                defaultValue={
-                  plant?.acquiredAt
-                    ? new Date(plant.acquiredAt).toISOString().split("T")[0]
-                    : ""
-                }
-              />
-            </div>
           </div>
 
+          {/* Date Acquired */}
+          <div className="space-y-2">
+            <Label htmlFor="acquiredAt">Date Acquired</Label>
+            <Input
+              id="acquiredAt"
+              name="acquiredAt"
+              type="date"
+              defaultValue={
+                plant?.acquiredAt
+                  ? new Date(plant.acquiredAt).toISOString().split("T")[0]
+                  : ""
+              }
+            />
+          </div>
+
+          {/* Notes */}
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>
             <Textarea
@@ -186,6 +282,7 @@ export function PlantForm({ species, plant }: PlantFormProps) {
             />
           </div>
 
+          {/* Action Buttons */}
           <div className="flex gap-4">
             <Button type="submit" disabled={isLoading}>
               {isLoading ? "Saving..." : plant ? "Update Plant" : "Add Plant"}

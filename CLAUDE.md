@@ -8,7 +8,9 @@ Garden Optimus is a plant care management web application that helps users track
 - **Database**: PostgreSQL with Prisma ORM (v6)
 - **Styling**: Tailwind CSS v4 + shadcn/ui components
 - **Authentication**: NextAuth.js v5 (beta) with OAuth (Google/GitHub)
-- **AI**: Anthropic Claude API for plant health analysis
+- **AI**: Anthropic Claude API for plant health analysis and species identification
+- **Search**: Fuse.js for fuzzy species matching
+- **Image Processing**: browser-image-compression for client-side image optimization
 - **Package Manager**: npm
 
 ## Project Structure
@@ -22,6 +24,9 @@ src/
 │   │   ├── health/        # Health check endpoint
 │   │   ├── photos/        # Photo management
 │   │   ├── plants/        # Plant CRUD operations
+│   │   ├── species/       # Species search and AI identification
+│   │   │   ├── identify/  # AI plant identification endpoint
+│   │   │   └── search/    # Species fuzzy search endpoint
 │   │   └── upload/        # File upload endpoint
 │   ├── login/             # Login page
 │   ├── plants/            # Plant pages (list, detail, edit, new)
@@ -35,12 +40,16 @@ src/
 │   ├── auth.ts           # NextAuth configuration
 │   ├── auth-utils.ts     # Auth helper functions (testable)
 │   ├── prisma.ts         # Prisma client singleton
-│   ├── ai.ts             # Claude API integration
+│   ├── ai.ts             # Claude API integration (health assessments)
+│   ├── ai-identify.ts    # Claude Vision for plant identification
+│   ├── image-compression.ts # Client-side image validation & compression
+│   ├── species-matcher.ts # Fuzzy species matching with Fuse.js
 │   ├── storage.ts        # File storage abstraction (local/Vercel Blob)
 │   ├── user-limit.ts     # User registration limit (10 users max)
 │   ├── rate-limit.ts     # In-memory rate limiting
 │   └── utils.ts          # General utilities
 └── types/                 # TypeScript type definitions
+    └── species.ts        # Shared species type definitions
 prisma/
 ├── schema.prisma          # Database schema
 └── seed.ts               # Plant species seed data
@@ -55,9 +64,13 @@ prisma/
 - `src/lib/auth-utils.ts` - Auth helper functions (platform detection, email validation)
 - `src/lib/prisma.ts` - Prisma client singleton for database access
 - `src/lib/ai.ts` - Claude Vision API integration for plant health assessment
+- `src/lib/ai-identify.ts` - Claude Vision API for AI plant species identification
+- `src/lib/image-compression.ts` - Client-side image validation (HEIC/AVIF detection via magic bytes) and compression
+- `src/lib/species-matcher.ts` - Fuzzy matching of AI identifications to database species using Fuse.js
 - `src/lib/storage.ts` - File storage abstraction (Vercel Blob in production, local filesystem in dev)
 - `src/lib/user-limit.ts` - User registration limit enforcement (10 users max, admin override)
 - `src/lib/rate-limit.ts` - In-memory rate limiting for API endpoints
+- `src/types/species.ts` - Shared TypeScript types for species data and AI identification
 - `prisma/schema.prisma` - Database models (User, Plant, CareLog, HealthAssessment, PlantSpecies, PlantPhoto, CareSchedule)
 - `prisma/seed.ts` - Seed data with 500 plant species (indoor, outdoor, Pacific Northwest natives, herbs, vegetables, and more)
 - `sentry.*.config.ts` - Sentry error monitoring configuration (client, server, edge)
@@ -179,6 +192,7 @@ The app enforces a 10-user limit for early access:
 API endpoints are protected with in-memory rate limiting:
 - `src/lib/rate-limit.ts` - Rate limit utility
 - Registration check: 10 requests per minute per IP
+- AI plant identification: 10 requests per hour per user
 - Returns `429 Too Many Requests` with `Retry-After` header when exceeded
 - Note: For multi-instance deployments, upgrade to Redis-based rate limiting
 
@@ -279,6 +293,56 @@ const filename = generatePhotoFilename(plantId, file.type, "prefix-");
 4. Response parsed for health status, issues, recommendations
 5. Assessment saved to database with photo
 
+## AI Plant Identification
+
+The app includes AI-powered plant identification when adding new plants.
+
+### Flow
+1. User clicks "Identify with AI" button in plant form (`AIIdentifyButton` component)
+2. User uploads or takes a photo of their plant
+3. Client-side validation checks for HEIC/AVIF via magic bytes (common iPhone formats)
+4. Image compressed client-side using `browser-image-compression` (max 1MB, 1920px)
+5. Image sent to `/api/species/identify` as FormData
+6. Server validates, converts to base64, calls Claude Vision API (`src/lib/ai-identify.ts`)
+7. AI returns species name, scientific name, confidence level, and care hints
+8. Server fuzzy-matches AI result to database species using Fuse.js (`src/lib/species-matcher.ts`)
+9. User sees matched species from database and can select one for their plant
+
+### Components
+- `AIIdentifyButton` - Trigger button + dialog for the identification flow
+- `SpeciesMatchPicker` - Displays AI identification results and database matches
+- `SpeciesCombobox` - Searchable dropdown for manual species selection
+- `SpeciesPreviewCard` - Preview card showing species details
+
+### API Endpoints
+- `POST /api/species/identify` - AI plant identification (rate limited: 10/hour per user)
+- `GET /api/species/search` - Fuzzy search species by name (query param: `q`, optional: `location`, `limit`)
+
+### Image Validation
+The `src/lib/image-compression.ts` module provides:
+- **Magic byte detection** for HEIC/AVIF files that browsers misreport as JPEG
+- **Client-side compression** to reduce upload size
+- **Async validation** that checks actual file content, not just MIME type
+
+```typescript
+import { validateImageFileAsync, compressImage, isHeicOrAvif } from "@/lib/image-compression";
+
+// Async validation (checks magic bytes)
+const result = await validateImageFileAsync(file);
+if (!result.valid) {
+  console.error(result.error); // e.g., "This image appears to be HEIC/AVIF format..."
+}
+
+// Compress before upload
+const compressed = await compressImage(file, { maxSizeMB: 1, maxWidthOrHeight: 1920 });
+```
+
+### Species Matching
+The `src/lib/species-matcher.ts` module provides fuzzy matching:
+- Uses Fuse.js for fuzzy search on common names and scientific names
+- Includes common plant aliases (e.g., "Devil's Ivy" → "Pothos")
+- Returns confidence scores: high (≤0.1), medium (≤0.3), low (>0.3)
+
 ## Species Library UI
 The plant species library (`/species`) provides a searchable, filterable catalog of all 500 plant species:
 - **Search**: Search by common name or scientific name
@@ -313,8 +377,13 @@ Place test files next to the code they test:
 ### Existing Tests
 - `src/lib/utils.test.ts` - Utility function tests (6 tests)
 - `src/lib/auth-utils.test.ts` - Auth helper tests (32 tests)
+- `src/lib/image-compression.test.ts` - Image validation and compression tests
+- `src/lib/species-matcher.test.ts` - Fuzzy species matching tests
 - `src/components/care-log-form.test.tsx` - Care log form tests (5 tests)
 - `src/components/delete-plant-button.test.tsx` - Delete button tests (5 tests)
+- `src/components/ai-identify-button.test.tsx` - AI identification button tests
+- `src/components/species-combobox.test.tsx` - Species combobox tests
+- `src/components/species-match-picker.test.tsx` - Species match picker tests
 
 ### Mock Data Helpers
 Available in `src/test/utils.tsx`:
