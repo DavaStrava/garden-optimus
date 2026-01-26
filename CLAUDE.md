@@ -303,7 +303,8 @@ The app includes AI-powered plant identification when adding new plants.
 ### Model Configuration
 
 **Model:** Claude Opus 4.5 (`claude-opus-4-5-20251101`)
-**Extended Thinking:** Enabled with 10,000 token budget
+**Extended Thinking:** Enabled with 5,000 token budget
+**Max Tokens:** 6,000 (must be > budget_tokens)
 
 #### Why Opus 4.5 + Extended Thinking?
 
