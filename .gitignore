@@ -50,3 +50,6 @@ next-env.d.ts
 # uploaded files
 /public/uploads/*
 !/public/uploads/.gitkeep
+
+# claude session summaries
+.claude/last-commit-summary.md
