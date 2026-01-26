@@ -3,6 +3,9 @@
 ## Project Overview
 Garden Optimus is a plant care management web application that helps users track their indoor and outdoor plants, log care activities, upload photos, and get AI-powered health assessments using Claude Vision.
 
+## Post-Commit Documentation
+**IMPORTANT:** After making any git commit, immediately run `/post-commit-summary` to document the changes. This saves a summary to `.claude/last-commit-summary.md` which is displayed at the start of future sessions.
+
 ## Tech Stack
 - **Framework**: Next.js 14+ (App Router) with TypeScript
 - **Database**: PostgreSQL with Prisma ORM (v6)
