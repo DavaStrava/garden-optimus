@@ -49,7 +49,12 @@ export async function GET(
         },
         orderBy: { updatedAt: "desc" },
       },
-      _count: { select: { plants: true, members: true } },
+      _count: {
+        select: {
+          plants: { where: { deletedAt: null } },
+          members: true,
+        },
+      },
     },
   });
 
@@ -107,7 +112,12 @@ export async function PUT(
         description: description?.trim() || null,
       },
       include: {
-        _count: { select: { plants: true, members: true } },
+        _count: {
+          select: {
+            plants: { where: { deletedAt: null } },
+            members: true,
+          },
+        },
         owner: { select: { name: true, email: true } },
       },
     });

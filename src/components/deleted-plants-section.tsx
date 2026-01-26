@@ -45,12 +45,11 @@ export function DeletedPlantsSection() {
   const [permanentDeletePlant, setPermanentDeletePlant] = useState<DeletedPlant | null>(null);
   const [isDeletingPermanently, setIsDeletingPermanently] = useState(false);
 
-  // Fetch deleted plants when section is opened
+  // Fetch deleted plants every time the section is opened (to avoid stale data)
   useEffect(() => {
-    if (isOpen && deletedPlants.length === 0) {
+    if (isOpen) {
       fetchDeletedPlants();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const fetchDeletedPlants = async () => {

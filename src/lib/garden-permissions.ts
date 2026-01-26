@@ -52,6 +52,7 @@ export function getPermissions(role: GardenRole): GardenPermission[] {
 /**
  * Get a user's role in a garden.
  * Returns OWNER if the user is the garden owner, or their member role if they're a member.
+ * Uses a single database query for efficiency.
  * @param userId - The user ID
  * @param gardenId - The garden ID
  * @returns The user's role, or null if they have no access
@@ -60,10 +61,17 @@ export async function getUserGardenRole(
   userId: string,
   gardenId: string
 ): Promise<GardenRole | null> {
-  // First check if user is the owner
+  // Single query to get garden owner and check membership
   const garden = await prisma.garden.findUnique({
     where: { id: gardenId },
-    select: { ownerId: true },
+    select: {
+      ownerId: true,
+      members: {
+        where: { userId },
+        select: { role: true },
+        take: 1,
+      },
+    },
   });
 
   if (!garden) {
@@ -74,18 +82,7 @@ export async function getUserGardenRole(
     return "OWNER";
   }
 
-  // Check if user is a member
-  const membership = await prisma.gardenMember.findUnique({
-    where: {
-      gardenId_userId: {
-        gardenId,
-        userId,
-      },
-    },
-    select: { role: true },
-  });
-
-  return membership?.role ?? null;
+  return garden.members[0]?.role ?? null;
 }
 
 /**

@@ -18,7 +18,12 @@ export async function GET() {
   const ownedGardens = await prisma.garden.findMany({
     where: { ownerId: session.user.id },
     include: {
-      _count: { select: { plants: true, members: true } },
+      _count: {
+        select: {
+          plants: { where: { deletedAt: null } },
+          members: true,
+        },
+      },
       owner: { select: { name: true, email: true } },
     },
     orderBy: { updatedAt: "desc" },
@@ -30,7 +35,12 @@ export async function GET() {
     include: {
       garden: {
         include: {
-          _count: { select: { plants: true, members: true } },
+          _count: {
+            select: {
+              plants: { where: { deletedAt: null } },
+              members: true,
+            },
+          },
           owner: { select: { name: true, email: true } },
         },
       },
@@ -85,7 +95,12 @@ export async function POST(request: Request) {
         ownerId: session.user.id,
       },
       include: {
-        _count: { select: { plants: true, members: true } },
+        _count: {
+          select: {
+            plants: { where: { deletedAt: null } },
+            members: true,
+          },
+        },
         owner: { select: { name: true, email: true } },
       },
     });

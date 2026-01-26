@@ -9,17 +9,26 @@ import { TRASH_RETENTION_DAYS } from "@/lib/soft-delete";
  * This endpoint is called by Vercel Cron.
  *
  * Security: Vercel Cron automatically sends CRON_SECRET in the Authorization header.
+ * In development, set CRON_SECRET in .env.local or use "dev-cron-secret" as the default.
  */
 export async function GET(request: Request) {
   // Verify this is a legitimate cron request (Vercel sends Authorization: Bearer <CRON_SECRET>)
   const authHeader = request.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
+  // Use CRON_SECRET from env, or a default for development only
+  const cronSecret = process.env.CRON_SECRET ||
+    (process.env.NODE_ENV === "development" ? "dev-cron-secret" : null);
 
-  // In production, require CRON_SECRET
-  if (process.env.NODE_ENV === "production" && cronSecret) {
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  // Always require authentication
+  if (!cronSecret) {
+    console.error("[Cron] CRON_SECRET environment variable is not set");
+    return NextResponse.json(
+      { error: "Server configuration error" },
+      { status: 500 }
+    );
+  }
+
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
