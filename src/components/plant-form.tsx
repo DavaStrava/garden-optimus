@@ -33,6 +33,11 @@ interface PlantFormProps {
   };
 }
 
+interface IdentificationPhoto {
+  blob: Blob;
+  mimeType: string;
+}
+
 export function PlantForm({ species, plant }: PlantFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -52,31 +57,54 @@ export function PlantForm({ species, plant }: PlantFormProps) {
   const [personalName, setPersonalName] = useState<string>(plant?.nickname || "");
   const [locationLocked, setLocationLocked] = useState<boolean>(false);
 
+  // Store identification photo for auto-save
+  const [identificationPhoto, setIdentificationPhoto] = useState<IdentificationPhoto | null>(null);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
-    const formData = new FormData(e.currentTarget);
+    const htmlFormData = new FormData(e.currentTarget);
     const data = {
       name: plantName,
       nickname: personalName || null,
       speciesId: selectedSpeciesId,
       location: location,
-      area: (formData.get("area") as string) || null,
-      acquiredAt: (formData.get("acquiredAt") as string) || null,
-      notes: (formData.get("notes") as string) || null,
+      area: (htmlFormData.get("area") as string) || null,
+      acquiredAt: (htmlFormData.get("acquiredAt") as string) || null,
+      notes: (htmlFormData.get("notes") as string) || null,
     };
 
     try {
       const url = plant ? `/api/plants/${plant.id}` : "/api/plants";
       const method = plant ? "PUT" : "POST";
 
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      let response: Response;
+
+      // Use FormData if we have an identification photo (new plants only)
+      if (!plant && identificationPhoto) {
+        const formData = new FormData();
+        formData.append("data", JSON.stringify(data));
+        // Get file extension from mime type
+        const ext = identificationPhoto.mimeType.split("/")[1] || "jpg";
+        formData.append(
+          "identificationPhoto",
+          identificationPhoto.blob,
+          `identification.${ext}`
+        );
+
+        response = await fetch(url, {
+          method,
+          body: formData,
+        });
+      } else {
+        response = await fetch(url, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+      }
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -128,11 +156,17 @@ export function PlantForm({ species, plant }: PlantFormProps) {
 
   const handleAISpeciesSelect = (
     speciesId: string,
-    speciesData: SpeciesData
+    speciesData: SpeciesData,
+    photoData?: { blob: Blob; mimeType: string }
   ) => {
     setSelectedSpeciesId(speciesId);
     setSelectedSpecies(speciesData);
     applyAutoPopulation(speciesData);
+
+    // Store the identification photo for auto-save
+    if (photoData) {
+      setIdentificationPhoto(photoData);
+    }
   };
 
   return (

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { identifyPlantFromImage } from "@/lib/ai-identify";
+import { identifyPlantFromImages } from "@/lib/ai-identify";
 import { matchSpeciesToDatabase } from "@/lib/species-matcher";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -72,66 +72,89 @@ export async function POST(request: Request) {
 
   try {
     const formData = await request.formData();
-    const file = formData.get("image") as File | null;
 
-    if (!file) {
+    // Support both single 'image' and multiple 'image1', 'image2' fields
+    const images: Array<{ base64: string; mimeType: string }> = [];
+    const validTypes = ["image/jpeg", "image/png", "image/webp"];
+
+    // Check for legacy single image field first
+    const singleImage = formData.get("image") as File | null;
+    // Check for multiple image fields
+    const image1 = formData.get("image1") as File | null;
+    const image2 = formData.get("image2") as File | null;
+
+    const filesToProcess: File[] = [];
+    if (image1) {
+      filesToProcess.push(image1);
+      if (image2) {
+        filesToProcess.push(image2);
+      }
+    } else if (singleImage) {
+      filesToProcess.push(singleImage);
+    }
+
+    if (filesToProcess.length === 0) {
       return NextResponse.json(
         { error: "No image provided" },
         { status: 400 }
       );
     }
 
-    // Validate file size (server-side check)
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { error: `File too large. Maximum size is ${MAX_FILE_SIZE / (1024 * 1024)}MB.` },
-        { status: 400 }
-      );
-    }
-
-    // Validate file type
-    const validTypes = ["image/jpeg", "image/png", "image/webp"];
-    if (!validTypes.includes(file.type)) {
-      return NextResponse.json(
-        { error: "Invalid image type. Please use JPEG, PNG, or WebP." },
-        { status: 400 }
-      );
-    }
-
-    // Convert file to base64
-    const buffer = await file.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString("base64");
-
-    // Detect actual image type from magic bytes (compression may change format)
-    const bytes = new Uint8Array(buffer);
-    let mimeType = file.type;
-
-    // Check magic bytes to detect actual format
-    if (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) {
-      mimeType = "image/jpeg";
-    } else if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) {
-      mimeType = "image/png";
-    } else if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
-      mimeType = "image/webp";
-    } else if (bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
-      // "ftyp" at offset 4 indicates HEIF/AVIF/HEIC container format
-      // Check for specific brand
-      const brand = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
-      if (brand === "avif" || brand === "avis") {
+    // Process each image
+    for (const file of filesToProcess) {
+      // Validate file size (server-side check)
+      if (file.size > MAX_FILE_SIZE) {
         return NextResponse.json(
-          { error: "AVIF images are not supported. Please use JPEG, PNG, or WebP format. On iPhone, go to Settings > Camera > Formats and select 'Most Compatible'." },
-          { status: 400 }
-        );
-      } else if (brand === "heic" || brand === "heix" || brand === "mif1") {
-        return NextResponse.json(
-          { error: "HEIC images are not supported. Please use JPEG, PNG, or WebP format. On iPhone, go to Settings > Camera > Formats and select 'Most Compatible'." },
+          { error: `File too large. Maximum size is ${MAX_FILE_SIZE / (1024 * 1024)}MB.` },
           { status: 400 }
         );
       }
+
+      // Validate file type
+      if (!validTypes.includes(file.type)) {
+        return NextResponse.json(
+          { error: "Invalid image type. Please use JPEG, PNG, or WebP." },
+          { status: 400 }
+        );
+      }
+
+      // Convert file to base64
+      const buffer = await file.arrayBuffer();
+      const base64 = Buffer.from(buffer).toString("base64");
+
+      // Detect actual image type from magic bytes (compression may change format)
+      const bytes = new Uint8Array(buffer);
+      let mimeType = file.type;
+
+      // Check magic bytes to detect actual format
+      if (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) {
+        mimeType = "image/jpeg";
+      } else if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) {
+        mimeType = "image/png";
+      } else if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
+        mimeType = "image/webp";
+      } else if (bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
+        // "ftyp" at offset 4 indicates HEIF/AVIF/HEIC container format
+        // Check for specific brand
+        const brand = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
+        if (brand === "avif" || brand === "avis") {
+          return NextResponse.json(
+            { error: "AVIF images are not supported. Please use JPEG, PNG, or WebP format. On iPhone, go to Settings > Camera > Formats and select 'Most Compatible'." },
+            { status: 400 }
+          );
+        } else if (brand === "heic" || brand === "heix" || brand === "mif1") {
+          return NextResponse.json(
+            { error: "HEIC images are not supported. Please use JPEG, PNG, or WebP format. On iPhone, go to Settings > Camera > Formats and select 'Most Compatible'." },
+            { status: 400 }
+          );
+        }
+      }
+
+      images.push({ base64, mimeType });
     }
 
     // Identify the plant using Claude Vision
-    const identificationResult = await identifyPlantFromImage(base64, mimeType);
+    const identificationResult = await identifyPlantFromImages(images);
 
     if (!identificationResult.success || !identificationResult.identification) {
       return NextResponse.json(

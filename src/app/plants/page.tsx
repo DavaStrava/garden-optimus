@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { WaterStatusIndicator } from "@/components/water-status-indicator";
 
 export default async function PlantsPage({
   searchParams,
@@ -43,6 +44,10 @@ export default async function PlantsPage({
       species: true,
       photos: { take: 1, orderBy: { createdAt: "desc" } },
       _count: { select: { careLogs: true, assessments: true } },
+      careSchedules: {
+        where: { careType: "WATERING", enabled: true },
+        take: 1,
+      },
     },
     orderBy: { updatedAt: "desc" },
   });
@@ -112,6 +117,9 @@ export default async function PlantsPage({
                       <p className="text-xs text-gray-400">
                         Added {new Date(plant.acquiredAt).toLocaleDateString()}
                       </p>
+                    )}
+                    {plant.careSchedules?.[0] && (
+                      <WaterStatusIndicator nextDueDate={plant.careSchedules[0].nextDueDate} />
                     )}
                     <div className="flex gap-4 mt-2 text-xs text-gray-500">
                       <span>{plant._count.careLogs} care logs</span>

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Header } from "@/components/header";
 import { PlantForm } from "@/components/plant-form";
+import { PageHeader } from "@/components/page-header";
 
 export default async function NewPlantPage() {
   const session = await auth();
@@ -19,7 +20,11 @@ export default async function NewPlantPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">Add New Plant</h1>
+        <PageHeader
+          title="Add New Plant"
+          backHref="/plants"
+          backLabel="All Plants"
+        />
         <PlantForm species={species} />
       </main>
     </div>

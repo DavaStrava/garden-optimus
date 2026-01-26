@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { suggestIntervalFromSpecies, calculateNextDueDate } from "@/lib/care-reminders";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -57,8 +58,9 @@ export async function POST(request: Request) {
         },
       });
 
+      const now = new Date();
+
       if (existingSchedule) {
-        const now = new Date();
         const nextDueDate = new Date(
           now.getTime() + existingSchedule.intervalDays * 24 * 60 * 60 * 1000
         );
@@ -69,6 +71,31 @@ export async function POST(request: Request) {
           data: {
             lastCaredAt: now,
             nextDueDate,
+          },
+        });
+      } else if (type === "WATERING") {
+        // Auto-create WATERING schedule when none exists
+        const plantWithSpecies = await tx.plant.findUnique({
+          where: { id: plantId },
+          include: { species: true },
+        });
+
+        // Calculate interval from species waterFrequency or use default 7 days
+        let intervalDays = 7;
+        if (plantWithSpecies?.species?.waterFrequency) {
+          intervalDays = suggestIntervalFromSpecies(plantWithSpecies.species.waterFrequency);
+        }
+
+        const nextDueDate = calculateNextDueDate(now, intervalDays);
+
+        await tx.careSchedule.create({
+          data: {
+            plantId,
+            careType: "WATERING",
+            intervalDays,
+            nextDueDate,
+            lastCaredAt: now,
+            enabled: true,
           },
         });
       }

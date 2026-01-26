@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,6 +55,15 @@ export default async function PlantDetailPage({
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
       <main className="container mx-auto px-4 py-8">
+        {/* Back Navigation */}
+        <Link
+          href="/plants"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          All Plants
+        </Link>
+
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>

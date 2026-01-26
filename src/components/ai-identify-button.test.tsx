@@ -168,6 +168,25 @@ describe("AIIdentifyButton", () => {
   });
 
   describe("identification flow", () => {
+    it("should show Identify Plant button after file selection", async () => {
+      const { user } = render(
+        <AIIdentifyButton onSpeciesSelect={vi.fn()} onSkip={vi.fn()} />
+      );
+
+      await user.click(screen.getByText("Identify with AI"));
+
+      const fileInput = document.querySelector(
+        'input[type="file"]:not([capture])'
+      ) as HTMLInputElement;
+      const file = createMockFile("test.jpg", "image/jpeg");
+
+      await user.upload(fileInput, file);
+
+      await waitFor(() => {
+        expect(screen.getByText("Identify Plant")).toBeInTheDocument();
+      });
+    });
+
     it("should show loading state during identification", async () => {
       // Delay the API response
       mockFetch.mockImplementation(
@@ -197,6 +216,12 @@ describe("AIIdentifyButton", () => {
 
       await user.upload(fileInput, file);
 
+      // Now click "Identify Plant" button to start identification
+      await waitFor(() => {
+        expect(screen.getByText("Identify Plant")).toBeInTheDocument();
+      });
+      await user.click(screen.getByText("Identify Plant"));
+
       await waitFor(() => {
         expect(screen.getByText("Identifying your plant...")).toBeInTheDocument();
       });
@@ -215,6 +240,12 @@ describe("AIIdentifyButton", () => {
       const file = createMockFile("test.jpg", "image/jpeg");
 
       await user.upload(fileInput, file);
+
+      // Click "Identify Plant" button
+      await waitFor(() => {
+        expect(screen.getByText("Identify Plant")).toBeInTheDocument();
+      });
+      await user.click(screen.getByText("Identify Plant"));
 
       await waitFor(() => {
         expect(screen.getByText("Select Matching Species")).toBeInTheDocument();
@@ -235,6 +266,12 @@ describe("AIIdentifyButton", () => {
       const file = createMockFile("test.jpg", "image/jpeg");
 
       await user.upload(fileInput, file);
+
+      // Click "Identify Plant" button
+      await waitFor(() => {
+        expect(screen.getByText("Identify Plant")).toBeInTheDocument();
+      });
+      await user.click(screen.getByText("Identify Plant"));
 
       await waitFor(() => {
         expect(screen.getByText("Select Matching Species")).toBeInTheDocument();
@@ -267,6 +304,12 @@ describe("AIIdentifyButton", () => {
 
       await user.upload(fileInput, file);
 
+      // Click "Identify Plant" button
+      await waitFor(() => {
+        expect(screen.getByText("Identify Plant")).toBeInTheDocument();
+      });
+      await user.click(screen.getByText("Identify Plant"));
+
       await waitFor(() => {
         expect(screen.getByText("Select Matching Species")).toBeInTheDocument();
       });
@@ -297,6 +340,12 @@ describe("AIIdentifyButton", () => {
 
       await user.upload(fileInput, file);
 
+      // Click "Identify Plant" button
+      await waitFor(() => {
+        expect(screen.getByText("Identify Plant")).toBeInTheDocument();
+      });
+      await user.click(screen.getByText("Identify Plant"));
+
       await waitFor(() => {
         expect(screen.getByText("Identification failed")).toBeInTheDocument();
       });
@@ -317,6 +366,12 @@ describe("AIIdentifyButton", () => {
       const file = createMockFile("test.jpg", "image/jpeg");
 
       await user.upload(fileInput, file);
+
+      // Click "Identify Plant" button
+      await waitFor(() => {
+        expect(screen.getByText("Identify Plant")).toBeInTheDocument();
+      });
+      await user.click(screen.getByText("Identify Plant"));
 
       await waitFor(() => {
         expect(screen.getByText("Network error")).toBeInTheDocument();
@@ -341,6 +396,12 @@ describe("AIIdentifyButton", () => {
 
       await user.upload(fileInput, file);
 
+      // Click "Identify Plant" button
+      await waitFor(() => {
+        expect(screen.getByText("Identify Plant")).toBeInTheDocument();
+      });
+      await user.click(screen.getByText("Identify Plant"));
+
       await waitFor(() => {
         expect(screen.getByText("Compression failed")).toBeInTheDocument();
       });
@@ -362,6 +423,12 @@ describe("AIIdentifyButton", () => {
       const file = createMockFile("test.jpg", "image/jpeg");
 
       await user.upload(fileInput, file);
+
+      // Click "Identify Plant" button
+      await waitFor(() => {
+        expect(screen.getByText("Identify Plant")).toBeInTheDocument();
+      });
+      await user.click(screen.getByText("Identify Plant"));
 
       await waitFor(() => {
         expect(screen.getByText("Select Matching Species")).toBeInTheDocument();
@@ -396,6 +463,12 @@ describe("AIIdentifyButton", () => {
 
       await user.upload(fileInput, file);
 
+      // Click "Identify Plant" button
+      await waitFor(() => {
+        expect(screen.getByText("Identify Plant")).toBeInTheDocument();
+      });
+      await user.click(screen.getByText("Identify Plant"));
+
       await waitFor(() => {
         expect(screen.getByText("Select Matching Species")).toBeInTheDocument();
       });
@@ -409,7 +482,7 @@ describe("AIIdentifyButton", () => {
   });
 
   describe("preview image", () => {
-    it("should show preview image during identification or results", async () => {
+    it("should show preview image after file selection", async () => {
       const { user } = render(
         <AIIdentifyButton onSpeciesSelect={vi.fn()} onSkip={vi.fn()} />
       );
@@ -424,7 +497,7 @@ describe("AIIdentifyButton", () => {
       await user.upload(fileInput, file);
 
       await waitFor(() => {
-        // Image may be in identifying state ("Plant being identified") or results state ("Your plant")
+        // Image preview should appear after file selection
         const previewImg = document.querySelector('img[src="' + mockObjectURL + '"]');
         expect(previewImg).toBeInTheDocument();
       });

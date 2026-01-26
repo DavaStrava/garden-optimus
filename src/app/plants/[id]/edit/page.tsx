@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Header } from "@/components/header";
 import { PlantForm } from "@/components/plant-form";
+import { PageHeader } from "@/components/page-header";
 
 export default async function EditPlantPage({
   params,
@@ -34,7 +35,11 @@ export default async function EditPlantPage({
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">Edit Plant</h1>
+        <PageHeader
+          title="Edit Plant"
+          backHref={`/plants/${id}`}
+          backLabel="Back to Plant"
+        />
         <PlantForm species={species} plant={plant} />
       </main>
     </div>

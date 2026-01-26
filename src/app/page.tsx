@@ -11,6 +11,7 @@ import { CareAlerts } from "@/components/care-alerts";
 import { WeatherCard } from "@/components/weather-card";
 import { WeatherAlerts } from "@/components/weather-alerts";
 import { SeasonalTips } from "@/components/seasonal-tips";
+import { WaterStatusIndicator } from "@/components/water-status-indicator";
 
 export default async function Home() {
   const session = await auth();
@@ -34,6 +35,10 @@ export default async function Home() {
         species: true,
         photos: { take: 1, orderBy: { createdAt: "desc" } },
         _count: { select: { careLogs: true, assessments: true } },
+        careSchedules: {
+          where: { careType: "WATERING", enabled: true },
+          take: 1,
+        },
       },
       orderBy: { updatedAt: "desc" },
       take: 6,
@@ -146,6 +151,9 @@ export default async function Home() {
                       <CardContent>
                         {plant.area && (
                           <p className="text-sm text-gray-500">{plant.area}</p>
+                        )}
+                        {plant.careSchedules?.[0] && (
+                          <WaterStatusIndicator nextDueDate={plant.careSchedules[0].nextDueDate} />
                         )}
                         <div className="flex gap-4 mt-2 text-xs text-gray-500">
                           <span>{plant._count.careLogs} care logs</span>

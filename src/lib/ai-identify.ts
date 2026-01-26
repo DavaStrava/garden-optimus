@@ -36,32 +36,83 @@ export interface IdentificationResult {
   error?: string;
 }
 
+interface ImageInput {
+  base64: string;
+  mimeType: string;
+}
+
 /**
- * Identifies a plant from an image using Claude Vision API
+ * Identifies a plant from one or more images using Claude Vision API
  */
 export async function identifyPlantFromImage(
   imageBase64: string,
   mimeType: string
 ): Promise<IdentificationResult> {
+  return identifyPlantFromImages([{ base64: imageBase64, mimeType }]);
+}
+
+/**
+ * Identifies a plant from multiple images using Claude Vision API
+ */
+export async function identifyPlantFromImages(
+  images: ImageInput[]
+): Promise<IdentificationResult> {
+  if (images.length === 0) {
+    return { success: false, error: "No images provided" };
+  }
+
   try {
-    const message = await getAnthropicClient().messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: mimeType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
-                data: imageBase64,
-              },
-            },
-            {
-              type: "text",
-              text: `You are a plant identification expert. Analyze this plant photo and identify the species.
+    type ImageMediaType = "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+
+    // Build content array with images followed by text prompt
+    const content: Array<
+      | { type: "image"; source: { type: "base64"; media_type: ImageMediaType; data: string } }
+      | { type: "text"; text: string }
+    > = [];
+
+    // Add all images
+    for (const image of images) {
+      content.push({
+        type: "image",
+        source: {
+          type: "base64",
+          media_type: image.mimeType as ImageMediaType,
+          data: image.base64,
+        },
+      });
+    }
+
+    // Add the prompt text
+    const promptText = images.length > 1
+      ? `You are a plant identification expert. You are looking at ${images.length} photos of the SAME plant from different angles. Analyze all photos together to make a more accurate identification.
+
+Return ONLY valid JSON in this exact format (no markdown, no code blocks, just raw JSON):
+{
+  "species": "Common Name",
+  "scientificName": "Scientific name or null if unknown",
+  "confidence": "high" or "medium" or "low",
+  "alternativeMatches": [
+    {"species": "Alternative 1", "scientificName": "Scientific name 1"},
+    {"species": "Alternative 2", "scientificName": "Scientific name 2"}
+  ],
+  "reasoning": "Brief explanation of how you identified this plant (key features observed across all photos)",
+  "careHints": {
+    "lightNeeds": "e.g., Bright indirect light",
+    "waterFrequency": "e.g., Weekly, when top inch is dry",
+    "humidity": "e.g., Average to high"
+  }
+}
+
+Focus on common houseplants, garden plants, herbs, and vegetables.
+If you cannot identify the plant with any confidence, return:
+{
+  "species": "Unknown",
+  "scientificName": null,
+  "confidence": "low",
+  "alternativeMatches": [],
+  "reasoning": "Unable to identify - explain why (blurry image, unusual angle, etc.)"
+}`
+      : `You are a plant identification expert. Analyze this plant photo and identify the species.
 
 Return ONLY valid JSON in this exact format (no markdown, no code blocks, just raw JSON):
 {
@@ -88,9 +139,17 @@ If you cannot identify the plant with any confidence, return:
   "confidence": "low",
   "alternativeMatches": [],
   "reasoning": "Unable to identify - explain why (blurry image, unusual angle, etc.)"
-}`,
-            },
-          ],
+}`;
+
+    content.push({ type: "text", text: promptText });
+
+    const message = await getAnthropicClient().messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content,
         },
       ],
     });

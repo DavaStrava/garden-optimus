@@ -56,6 +56,32 @@ export function SpeciesMatchPicker({
             </p>
           </div>
 
+          {identification.careHints && (
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <h4 className="text-sm font-medium mb-2">AI Suggested Care:</h4>
+              <div className="grid grid-cols-1 gap-2 text-sm">
+                {identification.careHints.lightNeeds && (
+                  <div className="flex items-center gap-2">
+                    <Sun className="h-4 w-4 text-yellow-500" />
+                    <span>{identification.careHints.lightNeeds}</span>
+                  </div>
+                )}
+                {identification.careHints.waterFrequency && (
+                  <div className="flex items-center gap-2">
+                    <Droplets className="h-4 w-4 text-blue-500" />
+                    <span>{identification.careHints.waterFrequency}</span>
+                  </div>
+                )}
+                {identification.careHints.humidity && (
+                  <div className="flex items-center gap-2">
+                    <Droplets className="h-4 w-4 text-cyan-500" />
+                    <span>Humidity: {identification.careHints.humidity}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-col gap-2">
             <Button variant="outline" onClick={onSkip}>
               Continue without selecting a species
