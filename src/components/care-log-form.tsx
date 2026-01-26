@@ -37,7 +37,8 @@ export function CareLogForm({ plantId }: CareLogFormProps) {
     setIsLoading(true);
     setError(null);
 
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
     const data = {
       plantId,
       type: formData.get("type") as string,
@@ -58,7 +59,7 @@ export function CareLogForm({ plantId }: CareLogFormProps) {
       }
 
       // Reset form
-      e.currentTarget.reset();
+      form.reset();
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
