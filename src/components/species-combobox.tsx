@@ -169,14 +169,20 @@ export function SpeciesCombobox({
           )}
           <div className="flex items-center gap-1 ml-2 shrink-0">
             {selectedSpecies && (
-              <button
-                type="button"
+              <span
+                role="button"
+                tabIndex={0}
                 onClick={handleClear}
-                className="p-1 hover:bg-muted rounded"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    handleClear(e as unknown as React.MouseEvent);
+                  }
+                }}
+                className="p-1 hover:bg-muted rounded cursor-pointer"
               >
                 <span className="sr-only">Clear</span>
-                <span className="text-xs">x</span>
-              </button>
+                <span className="text-xs">×</span>
+              </span>
             )}
             <ChevronsUpDown className="h-4 w-4 opacity-50" />
           </div>
