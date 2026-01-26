@@ -134,10 +134,10 @@ export async function identifyPlantFromImages(
     // misidentifies similar-looking plants (e.g., Peperomia vs Pothos).
     const message = await getAnthropicClient().messages.create({
       model: "claude-opus-4-5-20251101",
-      max_tokens: 6000, // Must be > budget_tokens when using extended thinking
+      max_tokens: 11000, // Must be > budget_tokens when using extended thinking
       thinking: {
         type: "enabled",
-        budget_tokens: 5000,
+        budget_tokens: 10000,
       },
       messages: [
         {
