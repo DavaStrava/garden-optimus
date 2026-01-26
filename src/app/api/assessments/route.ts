@@ -42,9 +42,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
-    // Verify plant ownership
+    // Verify plant ownership (only non-deleted plants)
     const plant = await prisma.plant.findFirst({
-      where: { id: plantId, userId: session.user.id },
+      where: { id: plantId, userId: session.user.id, deletedAt: null },
     });
 
     if (!plant) {

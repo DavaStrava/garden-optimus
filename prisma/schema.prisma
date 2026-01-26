@@ -48,17 +48,19 @@ model VerificationToken {
 
 // Application models
 model User {
-  id            String        @id @default(cuid())
-  name          String?
-  email         String?       @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  plants        Plant[]
-  location      UserLocation?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id                String         @id @default(cuid())
+  name              String?
+  email             String?        @unique
+  emailVerified     DateTime?
+  image             String?
+  accounts          Account[]
+  sessions          Session[]
+  plants            Plant[]
+  location          UserLocation?
+  ownedGardens      Garden[]       @relation("GardenOwner")
+  gardenMemberships GardenMember[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 }
 
 model UserLocation {
@@ -85,12 +87,18 @@ model Plant {
   notes         String?
   user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId        String
+  garden        Garden?            @relation(fields: [gardenId], references: [id], onDelete: SetNull)
+  gardenId      String?
   photos        PlantPhoto[]
   careLogs      CareLog[]
   assessments   HealthAssessment[]
   careSchedules CareSchedule[]
+  deletedAt     DateTime?          // Soft delete timestamp (null = not deleted)
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
+
+  @@index([userId, deletedAt])
+  @@index([gardenId])
 }
 
 enum PlantLocation {
@@ -168,4 +176,38 @@ model HealthAssessment {
   recommendations String?
   rawResponse     String?  @db.Text
   assessedAt      DateTime @default(now())
+}
+
+// Garden models for plant collections with sharing
+enum GardenRole {
+  VIEWER // Can view garden and plants
+  ADMIN  // Can add/remove plants, edit garden name
+  OWNER  // All above + delete garden + manage members
+}
+
+model Garden {
+  id          String         @id @default(cuid())
+  name        String         // Letters, numbers, spaces - max 40 chars
+  description String?
+  owner       User           @relation("GardenOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId     String
+  members     GardenMember[]
+  plants      Plant[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([ownerId])
+}
+
+model GardenMember {
+  id        String     @id @default(cuid())
+  garden    Garden     @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  gardenId  String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  role      GardenRole @default(VIEWER)
+  invitedAt DateTime   @default(now())
+
+  @@unique([gardenId, userId])
+  @@index([userId])
 }

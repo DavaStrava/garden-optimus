@@ -16,13 +16,13 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    // Find the photo and verify ownership
+    // Find the photo and verify ownership (only non-deleted plants)
     const photo = await prisma.plantPhoto.findFirst({
       where: { id },
       include: { plant: true },
     });
 
-    if (!photo || photo.plant.userId !== session.user.id) {
+    if (!photo || photo.plant.userId !== session.user.id || photo.plant.deletedAt !== null) {
       return NextResponse.json({ error: "Photo not found" }, { status: 404 });
     }
 

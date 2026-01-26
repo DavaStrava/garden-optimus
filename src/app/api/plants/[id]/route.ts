@@ -15,7 +15,7 @@ export async function GET(
   const { id } = await params;
 
   const plant = await prisma.plant.findFirst({
-    where: { id, userId: session.user.id },
+    where: { id, userId: session.user.id, deletedAt: null },
     include: {
       species: true,
       photos: { orderBy: { createdAt: "desc" } },
@@ -43,9 +43,9 @@ export async function PUT(
 
   const { id } = await params;
 
-  // Verify ownership
+  // Verify ownership (only non-deleted plants can be updated)
   const existingPlant = await prisma.plant.findFirst({
-    where: { id, userId: session.user.id },
+    where: { id, userId: session.user.id, deletedAt: null },
   });
 
   if (!existingPlant) {
@@ -91,9 +91,9 @@ export async function DELETE(
 
   const { id } = await params;
 
-  // Verify ownership
+  // Verify ownership (only non-deleted plants can be soft-deleted)
   const existingPlant = await prisma.plant.findFirst({
-    where: { id, userId: session.user.id },
+    where: { id, userId: session.user.id, deletedAt: null },
   });
 
   if (!existingPlant) {
@@ -101,7 +101,11 @@ export async function DELETE(
   }
 
   try {
-    await prisma.plant.delete({ where: { id } });
+    // Soft delete: set deletedAt timestamp instead of removing
+    await prisma.plant.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting plant:", error);

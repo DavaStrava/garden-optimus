@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,12 +14,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-interface DeletePlantButtonProps {
-  plantId: string;
-  plantName: string;
+interface DeleteGardenButtonProps {
+  gardenId: string;
+  gardenName: string;
 }
 
-export function DeletePlantButton({ plantId, plantName }: DeletePlantButtonProps) {
+export function DeleteGardenButton({ gardenId, gardenName }: DeleteGardenButtonProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -27,18 +28,20 @@ export function DeletePlantButton({ plantId, plantName }: DeletePlantButtonProps
     setIsDeleting(true);
 
     try {
-      const response = await fetch(`/api/plants/${plantId}`, {
+      const response = await fetch(`/api/gardens/${gardenId}`, {
         method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete plant");
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete garden");
       }
 
-      router.push("/plants");
+      router.push("/gardens");
       router.refresh();
     } catch (error) {
-      console.error("Error deleting plant:", error);
+      console.error("Error deleting garden:", error);
+      alert(error instanceof Error ? error.message : "Failed to delete garden");
       setIsDeleting(false);
     }
   };
@@ -46,15 +49,18 @@ export function DeletePlantButton({ plantId, plantName }: DeletePlantButtonProps
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="destructive">Delete</Button>
+        <Button variant="destructive">
+          <Trash2 className="h-4 w-4 mr-2" />
+          Delete
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Move to Trash</DialogTitle>
+          <DialogTitle>Delete Garden</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete &quot;{plantName}&quot;? It will be moved to
-            trash and automatically deleted after 7 days. You can restore it from
-            the trash section on the My Plants page.
+            Are you sure you want to delete &quot;{gardenName}&quot;? This action cannot
+            be undone. All members will lose access. Plants in this garden will
+            remain in your collection but will no longer be associated with this garden.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -66,7 +72,7 @@ export function DeletePlantButton({ plantId, plantName }: DeletePlantButtonProps
             onClick={handleDelete}
             disabled={isDeleting}
           >
-            {isDeleting ? "Moving to Trash..." : "Move to Trash"}
+            {isDeleting ? "Deleting..." : "Delete Garden"}
           </Button>
         </DialogFooter>
       </DialogContent>

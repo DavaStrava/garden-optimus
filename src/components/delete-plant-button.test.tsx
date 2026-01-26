@@ -25,11 +25,12 @@ describe("DeletePlantButton", () => {
     await user.click(screen.getByRole("button", { name: /delete/i }));
 
     // Dialog title
-    expect(screen.getByRole("heading", { name: /delete plant/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /move to trash/i })).toBeInTheDocument();
     // Plant name in dialog
     expect(screen.getByText(/my monstera/i)).toBeInTheDocument();
-    // Warning text
-    expect(screen.getByText(/cannot be undone/i)).toBeInTheDocument();
+    // Info about auto-delete and restore
+    expect(screen.getByText(/7 days/i)).toBeInTheDocument();
+    expect(screen.getByText(/restore/i)).toBeInTheDocument();
   });
 
   it("should close dialog when cancel is clicked", async () => {
@@ -45,7 +46,7 @@ describe("DeletePlantButton", () => {
 
     // Dialog should be closed
     await waitFor(() => {
-      expect(screen.queryByText(/cannot be undone/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/7 days/i)).not.toBeInTheDocument();
     });
   });
 
@@ -62,10 +63,9 @@ describe("DeletePlantButton", () => {
     // Open dialog
     await user.click(screen.getByRole("button", { name: /^delete$/i }));
 
-    // Click "Delete Plant" button in dialog (not the trigger)
-    const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
-    const deleteConfirmButton = deleteButtons.find(btn => btn.textContent === "Delete Plant");
-    await user.click(deleteConfirmButton!);
+    // Click "Move to Trash" button in dialog (not the trigger)
+    const trashButton = screen.getByRole("button", { name: /move to trash$/i });
+    await user.click(trashButton);
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith("/api/plants/plant-123", {
@@ -89,12 +89,11 @@ describe("DeletePlantButton", () => {
     // Open dialog
     await user.click(screen.getByRole("button", { name: /^delete$/i }));
 
-    // Click delete confirm button
-    const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
-    const deleteConfirmButton = deleteButtons.find(btn => btn.textContent === "Delete Plant");
-    await user.click(deleteConfirmButton!);
+    // Click "Move to Trash" confirm button
+    const trashButton = screen.getByRole("button", { name: /move to trash$/i });
+    await user.click(trashButton);
 
-    expect(screen.getByRole("button", { name: /deleting/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /moving to trash/i })).toBeInTheDocument();
 
     // Cleanup
     resolvePromise!({

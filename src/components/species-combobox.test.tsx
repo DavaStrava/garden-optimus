@@ -168,8 +168,8 @@ describe("SpeciesCombobox", () => {
         />
       );
 
-      // Find and click clear button
-      const clearButton = screen.getByText("x");
+      // Find and click clear button (using sr-only text)
+      const clearButton = screen.getByRole("button", { name: /clear/i });
       await user.click(clearButton);
 
       expect(onValueChange).toHaveBeenCalledWith(null, null);

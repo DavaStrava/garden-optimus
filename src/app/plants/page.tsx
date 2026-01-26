@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { WaterStatusIndicator } from "@/components/water-status-indicator";
+import { DeletedPlantsSection } from "@/components/deleted-plants-section";
 
 export default async function PlantsPage({
   searchParams,
@@ -27,6 +28,7 @@ export default async function PlantsPage({
   const plants = await prisma.plant.findMany({
     where: {
       userId: session.user.id,
+      deletedAt: null,
       ...(locationFilter && locationFilter !== "all"
         ? { location: locationFilter as "INDOOR" | "OUTDOOR" }
         : {}),
@@ -144,6 +146,11 @@ export default async function PlantsPage({
             </CardContent>
           </Card>
         )}
+
+        {/* Deleted Plants Section */}
+        <div className="mt-8 pt-6 border-t">
+          <DeletedPlantsSection />
+        </div>
       </main>
     </div>
   );

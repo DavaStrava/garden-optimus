@@ -30,7 +30,7 @@ export default async function Home() {
     outdoorCount,
   ] = await Promise.all([
     prisma.plant.findMany({
-      where: { userId: session.user.id },
+      where: { userId: session.user.id, deletedAt: null },
       include: {
         species: true,
         photos: { take: 1, orderBy: { createdAt: "desc" } },
@@ -44,13 +44,13 @@ export default async function Home() {
       take: 6,
     }),
     prisma.careLog.findMany({
-      where: { plant: { userId: session.user.id } },
+      where: { plant: { userId: session.user.id, deletedAt: null } },
       include: { plant: true },
       orderBy: { loggedAt: "desc" },
       take: 5,
     }),
     prisma.healthAssessment.findMany({
-      where: { plant: { userId: session.user.id } },
+      where: { plant: { userId: session.user.id, deletedAt: null } },
       include: { plant: true },
       orderBy: { assessedAt: "desc" },
       take: 3,
@@ -59,13 +59,13 @@ export default async function Home() {
       where: { userId: session.user.id },
     }),
     prisma.plant.count({
-      where: { userId: session.user.id },
+      where: { userId: session.user.id, deletedAt: null },
     }),
     prisma.plant.count({
-      where: { userId: session.user.id, location: "INDOOR" },
+      where: { userId: session.user.id, location: "INDOOR", deletedAt: null },
     }),
     prisma.plant.count({
-      where: { userId: session.user.id, location: "OUTDOOR" },
+      where: { userId: session.user.id, location: "OUTDOOR", deletedAt: null },
     }),
   ]);
 

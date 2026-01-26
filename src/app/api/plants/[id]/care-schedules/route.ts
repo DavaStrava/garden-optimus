@@ -25,13 +25,13 @@ export async function GET(request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Verify plant ownership
+  // Verify plant ownership (only non-deleted plants)
   const plant = await prisma.plant.findUnique({
     where: { id: plantId },
-    select: { userId: true },
+    select: { userId: true, deletedAt: true },
   });
 
-  if (!plant || plant.userId !== session.user.id) {
+  if (!plant || plant.userId !== session.user.id || plant.deletedAt !== null) {
     return NextResponse.json(
       { error: "Plant not found or access denied" },
       { status: 404 }
@@ -60,13 +60,13 @@ export async function POST(request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Verify plant ownership
+  // Verify plant ownership (only non-deleted plants)
   const plant = await prisma.plant.findUnique({
     where: { id: plantId },
-    select: { userId: true },
+    select: { userId: true, deletedAt: true },
   });
 
-  if (!plant || plant.userId !== session.user.id) {
+  if (!plant || plant.userId !== session.user.id || plant.deletedAt !== null) {
     return NextResponse.json(
       { error: "Plant not found or access denied" },
       { status: 404 }

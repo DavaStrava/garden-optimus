@@ -32,6 +32,12 @@ export function Header() {
                 My Plants
               </Link>
               <Link
+                href="/gardens"
+                className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+              >
+                Gardens
+              </Link>
+              <Link
                 href="/species"
                 className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
               >
@@ -61,6 +67,9 @@ export function Header() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/plants">My Plants</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/gardens">Gardens</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/species">Plant Library</Link>

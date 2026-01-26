@@ -21,9 +21,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verify plant ownership
+    // Verify plant ownership (only non-deleted plants)
     const plant = await prisma.plant.findFirst({
-      where: { id: plantId, userId: session.user.id },
+      where: { id: plantId, userId: session.user.id, deletedAt: null },
     });
 
     if (!plant) {

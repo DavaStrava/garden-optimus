@@ -31,7 +31,7 @@ export default async function PlantDetailPage({
   const { id } = await params;
 
   const plant = await prisma.plant.findFirst({
-    where: { id, userId: session.user.id },
+    where: { id, userId: session.user.id, deletedAt: null },
     include: {
       species: true,
       photos: { orderBy: { createdAt: "desc" } },

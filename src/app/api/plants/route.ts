@@ -11,7 +11,7 @@ export async function GET() {
   }
 
   const plants = await prisma.plant.findMany({
-    where: { userId: session.user.id },
+    where: { userId: session.user.id, deletedAt: null },
     include: {
       species: true,
       photos: { take: 1, orderBy: { createdAt: "desc" } },
