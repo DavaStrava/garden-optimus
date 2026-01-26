@@ -1,5 +1,34 @@
 import Anthropic from "@anthropic-ai/sdk";
 
+/**
+ * AI Plant Identification Module
+ *
+ * This module uses Claude Opus 4.5 with Extended Thinking to identify plants from images.
+ *
+ * ## Why Extended Thinking?
+ *
+ * Without extended thinking, the model must immediately output structured JSON,
+ * which forces quick (often incorrect) classifications. For example, a Baby Rubber
+ * Plant (Peperomia) was consistently misidentified as various Pothos varieties
+ * because the model couldn't deliberate before answering.
+ *
+ * With extended thinking enabled, the model gets an internal "thinking budget"
+ * to reason through the identification:
+ * - Examine leaf shape, thickness, and texture
+ * - Consider growth habit (compact vs vining)
+ * - Note presence/absence of aerial roots
+ * - Compare against similar species
+ * - Rule out incorrect matches
+ *
+ * This deliberation significantly improves accuracy for visually similar plants.
+ *
+ * ## Model Choice
+ *
+ * Claude Opus 4.5 is used instead of Sonnet for better visual analysis accuracy.
+ * The cost increase (~5x) is acceptable given the rate limit of 10 identifications
+ * per hour per user and the significant accuracy improvement.
+ */
+
 // Lazily initialize the Anthropic client to ensure env vars are loaded
 let anthropicClient: Anthropic | null = null;
 
@@ -83,69 +112,33 @@ export async function identifyPlantFromImages(
     }
 
     // Add the prompt text
-    const promptText = images.length > 1
-      ? `You are a plant identification expert. You are looking at ${images.length} photos of the SAME plant from different angles. Analyze all photos together to make a more accurate identification.
-
-Return ONLY valid JSON in this exact format (no markdown, no code blocks, just raw JSON):
+    const jsonFormat = `Return ONLY valid JSON (no markdown):
 {
   "species": "Common Name",
-  "scientificName": "Scientific name or null if unknown",
+  "scientificName": "Scientific name or null",
   "confidence": "high" or "medium" or "low",
-  "alternativeMatches": [
-    {"species": "Alternative 1", "scientificName": "Scientific name 1"},
-    {"species": "Alternative 2", "scientificName": "Scientific name 2"}
-  ],
-  "reasoning": "Brief explanation of how you identified this plant (key features observed across all photos)",
-  "careHints": {
-    "lightNeeds": "e.g., Bright indirect light",
-    "waterFrequency": "e.g., Weekly, when top inch is dry",
-    "humidity": "e.g., Average to high"
-  }
-}
-
-Focus on common houseplants, garden plants, herbs, and vegetables.
-If you cannot identify the plant with any confidence, return:
-{
-  "species": "Unknown",
-  "scientificName": null,
-  "confidence": "low",
-  "alternativeMatches": [],
-  "reasoning": "Unable to identify - explain why (blurry image, unusual angle, etc.)"
-}`
-      : `You are a plant identification expert. Analyze this plant photo and identify the species.
-
-Return ONLY valid JSON in this exact format (no markdown, no code blocks, just raw JSON):
-{
-  "species": "Common Name",
-  "scientificName": "Scientific name or null if unknown",
-  "confidence": "high" or "medium" or "low",
-  "alternativeMatches": [
-    {"species": "Alternative 1", "scientificName": "Scientific name 1"},
-    {"species": "Alternative 2", "scientificName": "Scientific name 2"}
-  ],
-  "reasoning": "Brief explanation of how you identified this plant (key features observed)",
-  "careHints": {
-    "lightNeeds": "e.g., Bright indirect light",
-    "waterFrequency": "e.g., Weekly, when top inch is dry",
-    "humidity": "e.g., Average to high"
-  }
-}
-
-Focus on common houseplants, garden plants, herbs, and vegetables.
-If you cannot identify the plant with any confidence, return:
-{
-  "species": "Unknown",
-  "scientificName": null,
-  "confidence": "low",
-  "alternativeMatches": [],
-  "reasoning": "Unable to identify - explain why (blurry image, unusual angle, etc.)"
+  "alternativeMatches": [{"species": "Name", "scientificName": "Name or null"}],
+  "reasoning": "Why you identified it this way",
+  "careHints": {"lightNeeds": "...", "waterFrequency": "...", "humidity": "..."}
 }`;
+
+    const promptText = images.length > 1
+      ? `Identify this plant. Here are ${images.length} photos of it.\n\n${jsonFormat}`
+      : `Identify this plant.\n\n${jsonFormat}`;
 
     content.push({ type: "text", text: promptText });
 
+    // Use Opus 4.5 with extended thinking for accurate plant identification.
+    // The thinking budget allows the model to reason through visual features
+    // before outputting the JSON response. Without this, the model often
+    // misidentifies similar-looking plants (e.g., Peperomia vs Pothos).
     const message = await getAnthropicClient().messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
+      model: "claude-opus-4-5-20251101",
+      max_tokens: 4000,
+      thinking: {
+        type: "enabled",
+        budget_tokens: 10000, // Allows ~2-3 pages of internal reasoning
+      },
       messages: [
         {
           role: "user",
@@ -154,8 +147,17 @@ If you cannot identify the plant with any confidence, return:
       ],
     });
 
-    const responseText =
-      message.content[0].type === "text" ? message.content[0].text : "";
+    // Extended thinking returns multiple content blocks: thinking blocks (internal)
+    // and text blocks (the actual response). We only need the text block with JSON.
+    const textBlock = message.content.find((block) => block.type === "text");
+    const responseText = textBlock?.type === "text" ? textBlock.text : "";
+
+    if (!responseText) {
+      return {
+        success: false,
+        error: "AI returned no response. Please try again.",
+      };
+    }
 
     // Parse JSON response
     try {

@@ -300,6 +300,35 @@ const filename = generatePhotoFilename(plantId, file.type, "prefix-");
 
 The app includes AI-powered plant identification when adding new plants.
 
+### Model Configuration
+
+**Model:** Claude Opus 4.5 (`claude-opus-4-5-20251101`)
+**Extended Thinking:** Enabled with 10,000 token budget
+
+#### Why Opus 4.5 + Extended Thinking?
+
+Initially, the identification used Claude Sonnet 4 without extended thinking. This caused consistent misidentifications - for example, a Baby Rubber Plant (Peperomia) was identified as various Pothos varieties.
+
+The problem: Without extended thinking, the model must immediately output structured JSON, forcing quick classifications without deliberation.
+
+The solution: Claude Opus 4.5 with extended thinking allows the model to reason internally before answering:
+- Examine leaf shape, thickness, and texture
+- Consider growth habit (compact vs vining)
+- Note presence/absence of aerial roots
+- Compare against similar species
+- Rule out incorrect matches
+
+This deliberation significantly improves accuracy for visually similar plants.
+
+#### Cost Implications
+
+| Model | Input | Output |
+|-------|-------|--------|
+| Sonnet 4 | $3/M tokens | $15/M tokens |
+| Opus 4.5 | $15/M tokens | $75/M tokens |
+
+The ~5x cost increase is acceptable given the rate limit (10 identifications/hour/user) and the significant accuracy improvement.
+
 ### Flow
 1. User clicks "Identify with AI" button in plant form (`AIIdentifyButton` component)
 2. User uploads or takes a photo of their plant
@@ -307,9 +336,10 @@ The app includes AI-powered plant identification when adding new plants.
 4. Image compressed client-side using `browser-image-compression` (max 1MB, 1920px)
 5. Image sent to `/api/species/identify` as FormData
 6. Server validates, converts to base64, calls Claude Vision API (`src/lib/ai-identify.ts`)
-7. AI returns species name, scientific name, confidence level, and care hints
-8. Server fuzzy-matches AI result to database species using Fuse.js (`src/lib/species-matcher.ts`)
-9. User sees matched species from database and can select one for their plant
+7. Model reasons through identification using extended thinking (internal, not visible to user)
+8. AI returns species name, scientific name, confidence level, and care hints
+9. Server fuzzy-matches AI result to database species using Fuse.js (`src/lib/species-matcher.ts`)
+10. User sees matched species from database and can select one for their plant
 
 ### Components
 - `AIIdentifyButton` - Trigger button + dialog for the identification flow
