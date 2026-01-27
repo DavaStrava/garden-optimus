@@ -95,14 +95,14 @@ export function SpeciesMatchPicker({
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
+            <Sparkles className="h-5 w-5 text-primary shrink-0" />
             <CardTitle className="text-base">Select Matching Species</CardTitle>
           </div>
           {getConfidenceBadge(identification.confidence)}
         </div>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-muted-foreground mt-1 break-words">
           AI identified this as <strong>{identification.species}</strong>.{" "}
           {identification.reasoning}
         </p>

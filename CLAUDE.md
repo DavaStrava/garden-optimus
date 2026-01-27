@@ -214,6 +214,15 @@ Sentry is configured for production error tracking:
 - **Authenticated**: Includes environment variable status (database, auth, AI, blob, etc.)
 - Returns `503` if database connection fails
 
+### Vercel Blob Storage (Required for Production)
+Photo uploads require Vercel Blob storage to be connected in production:
+1. Go to Vercel Dashboard → Project → **Storage** tab
+2. Click **Create** → Select **Blob**
+3. Connect the Blob store to your project
+4. `BLOB_READ_WRITE_TOKEN` will be automatically added to environment variables
+
+**Important:** Without Vercel Blob connected, photo uploads will fail silently in production (plants are created but photos are not saved). Local development uses filesystem storage (`public/uploads/`) and doesn't require Blob.
+
 ## Code Patterns
 
 ### API Routes
@@ -450,3 +459,29 @@ mockFetch.mockResolvedValueOnce({
   json: () => Promise.resolve({ data: "test" }),
 });
 ```
+
+## Troubleshooting
+
+### Photos not saving in production (but work locally)
+**Symptom:** Plants are created but photos show "No photos yet" in production, while everything works locally.
+
+**Cause:** Vercel Blob storage is not connected. Local dev uses filesystem, production requires Vercel Blob.
+
+**Fix:**
+1. Vercel Dashboard → Project → Storage → Create → Blob
+2. Connect to project (adds `BLOB_READ_WRITE_TOKEN` automatically)
+3. Redeploy
+
+### AI identification returns wrong species
+**Symptom:** Plant identification consistently misidentifies visually similar plants.
+
+**Cause:** Model may need more reasoning time for difficult identifications.
+
+**Current config:** Uses Claude Opus 4.5 with extended thinking (10K token budget) for better accuracy. If issues persist, the species may not be in the 500-species database - check `/species` library.
+
+### HEIC/AVIF images rejected
+**Symptom:** iPhone photos fail validation even though they appear to be JPEG.
+
+**Cause:** iPhones save photos in HEIC/AVIF format but browsers misreport them as JPEG. The app detects this via magic byte inspection.
+
+**Fix for users:** iPhone Settings → Camera → Formats → Select "Most Compatible"
