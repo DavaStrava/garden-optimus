@@ -24,6 +24,7 @@ src/
 │   │   ├── assessments/   # AI health assessment endpoint
 │   │   ├── auth/          # NextAuth handlers + registration check
 │   │   ├── care-logs/     # Care logging endpoint
+│   │   ├── care-schedules/ # Care schedule CRUD (global + per-schedule)
 │   │   ├── health/        # Health check endpoint
 │   │   ├── photos/        # Photo management
 │   │   ├── plants/        # Plant CRUD operations
@@ -34,6 +35,7 @@ src/
 │   ├── login/             # Login page
 │   ├── plants/            # Plant pages (list, detail, edit, new)
 │   ├── registration-closed/ # User limit reached page
+│   ├── schedules/         # Care schedules management page
 │   ├── species/           # Plant species library
 │   └── page.tsx           # Dashboard/home
 ├── components/            # React components
@@ -404,6 +406,37 @@ The plant species library (`/species`) provides a searchable, filterable catalog
 
 Species information is also displayed in the plant detail page's "Care Guide" card, with the description shown at the top before specific care requirements.
 
+## Care Schedule Management
+
+### Overview
+Users can create, edit, and delete recurring care schedules for their plants. Schedules track when care tasks are due and automatically advance the next due date when care is logged.
+
+### Pages & Components
+- **`/schedules`** - Central page showing all enabled care schedules across all plants, with status filter tabs (All / Overdue / Due Today / Due Soon / Upcoming)
+- **Plant detail page** (`/plants/[id]`) - "Upcoming Care" card shows per-plant schedules with inline Done, Edit, and Delete actions
+- **CareScheduleForm** - Toggle-based form on plant detail sidebar for enabling/disabling care type reminders with configurable intervals
+
+### Key Components
+- `UpcomingCareCard` - Client component for plant detail "Upcoming Care" section with action buttons
+- `ScheduleList` - Filterable list of all schedules with status tabs and action buttons
+- `ScheduleEditPopover` - Inline popover to edit interval and next due date
+- `DeleteScheduleButton` - Delete confirmation dialog following the same pattern as `DeletePlantButton`
+- `QuickCareButton` - "Done" button that logs care and advances the schedule's next due date
+- `ReminderStatusBadge` - Colored badge showing overdue/due-today/due-soon/upcoming status
+
+### API Endpoints
+- `GET /api/care-schedules` - List all enabled schedules for user (supports `dueWithin` and `status` query params)
+- `POST /api/care-schedules` - Create a new schedule
+- `GET/PUT/DELETE /api/care-schedules/[id]` - Read/update/delete a specific schedule
+- `GET /api/plants/[id]/care-schedules` - List schedules for a specific plant
+- `POST /api/plants/[id]/care-schedules` - Create or upsert a schedule for a plant (unique constraint: `plantId_careType`)
+
+### Care Schedule Flow
+1. Schedules are auto-created when a user first logs WATERING for a plant (interval derived from species waterFrequency)
+2. Users can manually enable additional care types via CareScheduleForm on the plant detail page
+3. When care is logged (via CareLogForm or QuickCareButton), the schedule's `nextDueDate` advances by `intervalDays`
+4. Dashboard shows tasks due within 3 days; the `/schedules` page shows all schedules regardless of due date
+
 ## Testing
 
 ### Setup
@@ -427,6 +460,10 @@ Place test files next to the code they test:
 - `src/components/ai-identify-button.test.tsx` - AI identification button tests
 - `src/components/species-combobox.test.tsx` - Species combobox tests
 - `src/components/species-match-picker.test.tsx` - Species match picker tests
+- `src/components/delete-schedule-button.test.tsx` - Delete schedule button tests
+- `src/components/schedule-edit-popover.test.tsx` - Schedule edit popover tests
+- `src/components/upcoming-care-card.test.tsx` - Upcoming care card tests
+- `src/components/care-schedule-form.test.tsx` - Care schedule form tests (toggle-off fix)
 
 ### Mock Data Helpers
 Available in `src/test/utils.tsx`:

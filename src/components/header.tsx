@@ -63,6 +63,14 @@ export function Header() {
                   </SheetClose>
                   <SheetClose asChild>
                     <Link
+                      href="/schedules"
+                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+                    >
+                      Schedules
+                    </Link>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Link
                       href="/species"
                       className="flex items-center gap-2 rounded-lg px-3 py-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
                     >
@@ -93,6 +101,12 @@ export function Header() {
                 className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
               >
                 Gardens
+              </Link>
+              <Link
+                href="/schedules"
+                className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+              >
+                Schedules
               </Link>
               <Link
                 href="/species"
@@ -127,6 +141,9 @@ export function Header() {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/gardens">Gardens</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/schedules">Schedules</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/species">Plant Library</Link>

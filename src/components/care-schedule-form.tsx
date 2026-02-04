@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,9 +43,8 @@ export function CareScheduleForm({
 }: CareScheduleFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [scheduleConfig, setScheduleConfig] = useState<
-    Record<string, { enabled: boolean; intervalDays: number }>
-  >(() => {
+
+  const buildConfig = () => {
     const config: Record<string, { enabled: boolean; intervalDays: number }> =
       {};
     careTypes.forEach((type) => {
@@ -57,7 +56,11 @@ export function CareScheduleForm({
       };
     });
     return config;
-  });
+  };
+
+  const [scheduleConfig, setScheduleConfig] = useState(buildConfig);
+  // Track the last-saved state to avoid stale prop references on rapid saves
+  const [savedConfig, setSavedConfig] = useState(buildConfig);
 
   const handleToggle = (careType: string, enabled: boolean) => {
     setScheduleConfig((prev) => ({
@@ -79,21 +82,43 @@ export function CareScheduleForm({
   const handleSave = async () => {
     setIsSubmitting(true);
     try {
-      // Save each enabled schedule
-      const promises = Object.entries(scheduleConfig)
-        .filter(([, config]) => config.enabled)
-        .map(([careType, config]) =>
-          fetch(`/api/plants/${plantId}/care-schedules`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              careType,
-              intervalDays: config.intervalDays,
-            }),
-          })
-        );
+      const promises: Promise<Response>[] = [];
+
+      Object.entries(scheduleConfig).forEach(([careType, config]) => {
+        if (config.enabled) {
+          // Save enabled schedules (upsert via POST)
+          promises.push(
+            fetch(`/api/plants/${plantId}/care-schedules`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                careType,
+                intervalDays: config.intervalDays,
+              }),
+            })
+          );
+        } else {
+          // Disable schedules that were toggled off (use savedConfig to
+          // avoid stale prop references on rapid successive saves)
+          const wasPreviouslyEnabled = savedConfig[careType]?.enabled;
+          const existing = existingSchedules.find(
+            (s) => s.careType === careType
+          );
+          if (existing && wasPreviouslyEnabled) {
+            promises.push(
+              fetch(`/api/care-schedules/${existing.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ enabled: false }),
+              })
+            );
+          }
+        }
+      });
 
       await Promise.all(promises);
+      // Snapshot the current config as the new baseline for change detection
+      setSavedConfig({ ...scheduleConfig });
       router.refresh();
     } catch (error) {
       console.error("Failed to save schedules:", error);
@@ -105,6 +130,16 @@ export function CareScheduleForm({
   const enabledCount = Object.values(scheduleConfig).filter(
     (c) => c.enabled
   ).length;
+
+  const hasChanges = useMemo(
+    () =>
+      Object.entries(scheduleConfig).some(([careType, config]) => {
+        const saved = savedConfig[careType];
+        if (!saved) return config.enabled;
+        return config.enabled !== saved.enabled || config.intervalDays !== saved.intervalDays;
+      }),
+    [scheduleConfig, savedConfig]
+  );
 
   return (
     <Card>
@@ -184,7 +219,7 @@ export function CareScheduleForm({
 
         <Button
           onClick={handleSave}
-          disabled={isSubmitting || enabledCount === 0}
+          disabled={isSubmitting || !hasChanges}
           className="w-full"
         >
           {isSubmitting ? "Saving..." : `Save ${enabledCount} Reminder${enabledCount !== 1 ? "s" : ""}`}

@@ -14,7 +14,7 @@ import { DeletePlantButton } from "@/components/delete-plant-button";
 import { PhotoUpload } from "@/components/photo-upload";
 import { HealthAssessmentButton } from "@/components/health-assessment-button";
 import { CareScheduleForm } from "@/components/care-schedule-form";
-import { ReminderStatusBadge } from "@/components/reminder-status-badge";
+import { UpcomingCareCard } from "@/components/upcoming-care-card";
 import { getReminderStatus } from "@/lib/care-reminders";
 
 export default async function PlantDetailPage({
@@ -45,9 +45,13 @@ export default async function PlantDetailPage({
     notFound();
   }
 
-  // Calculate status for each schedule
+  // Calculate status for each schedule, serialize dates for client component
   const schedulesWithStatus = plant.careSchedules.map((schedule) => ({
-    ...schedule,
+    id: schedule.id,
+    careType: schedule.careType,
+    intervalDays: schedule.intervalDays,
+    nextDueDate: schedule.nextDueDate.toISOString(),
+    enabled: schedule.enabled,
     statusInfo: getReminderStatus(schedule.nextDueDate),
   }));
 
@@ -228,38 +232,11 @@ export default async function PlantDetailPage({
             />
 
             {/* Upcoming Care - only show if schedules exist */}
-            {schedulesWithStatus.length > 0 && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle>Upcoming Care</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {schedulesWithStatus
-                    .filter((s) => s.enabled)
-                    .map((schedule) => (
-                      <div
-                        key={schedule.id}
-                        className="flex items-center justify-between text-sm"
-                      >
-                        <span>
-                          {schedule.careType === "WATERING" && "💧 "}
-                          {schedule.careType === "FERTILIZING" && "🌿 "}
-                          {schedule.careType === "REPOTTING" && "🪴 "}
-                          {schedule.careType === "PRUNING" && "✂️ "}
-                          {schedule.careType === "PEST_TREATMENT" && "🐛 "}
-                          {schedule.careType === "OTHER" && "📝 "}
-                          {schedule.careType.charAt(0) +
-                            schedule.careType.slice(1).toLowerCase().replace("_", " ")}
-                        </span>
-                        <ReminderStatusBadge
-                          status={schedule.statusInfo.status}
-                          label={schedule.statusInfo.label}
-                        />
-                      </div>
-                    ))}
-                </CardContent>
-              </Card>
-            )}
+            <UpcomingCareCard
+              plantId={plant.id}
+              plantName={plant.name}
+              schedules={schedulesWithStatus}
+            />
 
             {/* Plant Info */}
             <Card>
