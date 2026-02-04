@@ -108,7 +108,7 @@ export function PhotoUpload({ plantId, photos }: PhotoUploadProps) {
           ))}
         </div>
       ) : (
-        <p className="text-gray-500 text-center py-4 mb-4">No photos yet</p>
+        <p className="text-muted-foreground text-center py-4 mb-4">No photos yet</p>
       )}
 
       {/* Upload Button */}

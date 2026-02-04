@@ -89,7 +89,7 @@ export function GardenForm({ mode, initialData }: GardenFormProps) {
               maxLength={GARDEN_NAME_MAX_LENGTH}
               required
             />
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground/70">
               {name.length}/{GARDEN_NAME_MAX_LENGTH} characters
             </p>
           </div>
@@ -104,7 +104,7 @@ export function GardenForm({ mode, initialData }: GardenFormProps) {
               maxLength={GARDEN_DESCRIPTION_MAX_LENGTH}
               rows={3}
             />
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground/70">
               {description.length}/{GARDEN_DESCRIPTION_MAX_LENGTH} characters
             </p>
           </div>

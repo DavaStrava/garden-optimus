@@ -25,7 +25,7 @@ export function Header() {
   const { data: session } = useSession();
 
   return (
-    <header className="border-b bg-white dark:bg-gray-950">
+    <header className="border-b border-primary/10 bg-primary/5">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-4">
           {/* Mobile hamburger menu */}
@@ -48,7 +48,7 @@ export function Header() {
                   <SheetClose asChild>
                     <Link
                       href="/plants"
-                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground"
                     >
                       My Plants
                     </Link>
@@ -56,7 +56,7 @@ export function Header() {
                   <SheetClose asChild>
                     <Link
                       href="/gardens"
-                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground"
                     >
                       Gardens
                     </Link>
@@ -64,7 +64,7 @@ export function Header() {
                   <SheetClose asChild>
                     <Link
                       href="/schedules"
-                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground"
                     >
                       Schedules
                     </Link>
@@ -72,7 +72,7 @@ export function Header() {
                   <SheetClose asChild>
                     <Link
                       href="/species"
-                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground"
                     >
                       Plant Library
                     </Link>
@@ -92,25 +92,25 @@ export function Header() {
             <nav className="hidden md:flex items-center gap-4">
               <Link
                 href="/plants"
-                className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                className="text-sm text-muted-foreground hover:text-foreground"
               >
                 My Plants
               </Link>
               <Link
                 href="/gardens"
-                className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                className="text-sm text-muted-foreground hover:text-foreground"
               >
                 Gardens
               </Link>
               <Link
                 href="/schedules"
-                className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                className="text-sm text-muted-foreground hover:text-foreground"
               >
                 Schedules
               </Link>
               <Link
                 href="/species"
-                className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                className="text-sm text-muted-foreground hover:text-foreground"
               >
                 Plant Library
               </Link>
@@ -133,7 +133,7 @@ export function Header() {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <div className="flex flex-col space-y-1 p-2">
                   <p className="text-sm font-medium">{session.user?.name}</p>
-                  <p className="text-xs text-gray-500">{session.user?.email}</p>
+                  <p className="text-xs text-muted-foreground">{session.user?.email}</p>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>

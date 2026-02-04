@@ -55,7 +55,7 @@ export default async function PlantsPage({
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-muted/50">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
@@ -102,7 +102,7 @@ export default async function PlantsPage({
                       <div>
                         <CardTitle className="text-lg">{plant.name}</CardTitle>
                         {plant.nickname && (
-                          <p className="text-sm text-gray-500">&quot;{plant.nickname}&quot;</p>
+                          <p className="text-sm text-muted-foreground">&quot;{plant.nickname}&quot;</p>
                         )}
                         {plant.species && (
                           <CardDescription>{plant.species.commonName}</CardDescription>
@@ -114,16 +114,16 @@ export default async function PlantsPage({
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {plant.area && <p className="text-sm text-gray-500 mb-2">{plant.area}</p>}
+                    {plant.area && <p className="text-sm text-muted-foreground mb-2">{plant.area}</p>}
                     {plant.acquiredAt && (
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-muted-foreground/70">
                         Added {new Date(plant.acquiredAt).toLocaleDateString()}
                       </p>
                     )}
                     {plant.careSchedules?.[0] && (
                       <WaterStatusIndicator nextDueDate={plant.careSchedules[0].nextDueDate} />
                     )}
-                    <div className="flex gap-4 mt-2 text-xs text-gray-500">
+                    <div className="flex gap-4 mt-2 text-xs text-muted-foreground/70">
                       <span>{plant._count.careLogs} care logs</span>
                       <span>{plant._count.assessments} assessments</span>
                     </div>
@@ -135,7 +135,7 @@ export default async function PlantsPage({
         ) : (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-gray-500 mb-4">
+              <p className="text-muted-foreground mb-4">
                 {searchQuery || locationFilter
                   ? "No plants match your search"
                   : "You haven't added any plants yet"}

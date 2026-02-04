@@ -50,13 +50,13 @@ export default async function GardensPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-muted/50">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold">Gardens</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
+            <p className="text-muted-foreground mt-1">
               Organize your plants into collections and share with others
             </p>
           </div>
@@ -90,7 +90,7 @@ export default async function GardensPage() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex gap-4 text-sm text-gray-500">
+                      <div className="flex gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Flower2 className="h-4 w-4" />
                           {garden._count.plants} plants
@@ -108,7 +108,7 @@ export default async function GardensPage() {
           ) : (
             <Card>
               <CardContent className="py-8 text-center">
-                <p className="text-gray-500 mb-4">You haven&apos;t created any gardens yet</p>
+                <p className="text-muted-foreground mb-4">You haven&apos;t created any gardens yet</p>
                 <Button asChild>
                   <Link href="/gardens/new">Create Your First Garden</Link>
                 </Button>
@@ -141,7 +141,7 @@ export default async function GardensPage() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex gap-4 text-sm text-gray-500">
+                      <div className="flex gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Flower2 className="h-4 w-4" />
                           {garden._count.plants} plants
@@ -151,7 +151,7 @@ export default async function GardensPage() {
                           {garden._count.members + 1} people
                         </span>
                       </div>
-                      <p className="text-xs text-gray-400 mt-2">
+                      <p className="text-xs text-muted-foreground/70 mt-2">
                         Owned by {garden.owner.name}
                       </p>
                     </CardContent>

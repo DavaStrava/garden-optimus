@@ -81,7 +81,7 @@ export default async function GardenDetailPage({
   const isOwner = role === "OWNER";
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-muted/50">
       <Header />
       <main className="container mx-auto px-4 py-8">
         {/* Back Navigation */}
@@ -103,10 +103,10 @@ export default async function GardenDetailPage({
               </Badge>
             </div>
             {garden.description && (
-              <p className="text-gray-600 dark:text-gray-400 mt-1">{garden.description}</p>
+              <p className="text-muted-foreground mt-1">{garden.description}</p>
             )}
             {!isOwner && (
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Owned by {garden.owner.name || garden.owner.email}
               </p>
             )}
@@ -173,10 +173,10 @@ export default async function GardenDetailPage({
                             </div>
                           </CardHeader>
                           <CardContent>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-muted-foreground/70">
                               Added by {plant.user.name || "Unknown"}
                             </p>
-                            <div className="flex gap-4 mt-2 text-xs text-gray-500">
+                            <div className="flex gap-4 mt-2 text-xs text-muted-foreground/70">
                               <span>{plant._count.careLogs} care logs</span>
                               <span>{plant._count.assessments} assessments</span>
                             </div>
@@ -187,15 +187,15 @@ export default async function GardenDetailPage({
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <p className="text-gray-500 mb-4">No plants in this garden yet</p>
+                    <p className="text-muted-foreground mb-4">No plants in this garden yet</p>
                     {canManagePlants && userPlantsNotInGarden.length > 0 && (
-                      <p className="text-sm text-gray-400">
+                      <p className="text-sm text-muted-foreground">
                         Use the &quot;Add Plant&quot; button above to add plants from your collection
                       </p>
                     )}
                     {canManagePlants && userPlantsNotInGarden.length === 0 && (
                       <div>
-                        <p className="text-sm text-gray-400 mb-4">
+                        <p className="text-sm text-muted-foreground mb-4">
                           You don&apos;t have any plants available to add
                         </p>
                         <Button asChild>

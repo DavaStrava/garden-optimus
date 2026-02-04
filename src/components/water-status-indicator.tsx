@@ -14,7 +14,7 @@ export function WaterStatusIndicator({ nextDueDate }: WaterStatusIndicatorProps)
         ? "text-orange-600"
         : status.status === "due-soon"
           ? "text-blue-600"
-          : "text-gray-500";
+          : "text-muted-foreground";
 
   const displayText =
     status.status === "overdue" || status.status === "due-today"

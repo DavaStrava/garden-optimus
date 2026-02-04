@@ -95,7 +95,7 @@ export function HealthAssessmentButton({ plantId }: HealthAssessmentButtonProps)
             <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">{error}</div>
           )}
 
-          <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center">
+          <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
             {preview ? (
               <div className="space-y-4">
                 <img
@@ -129,7 +129,7 @@ export function HealthAssessmentButton({ plantId }: HealthAssessmentButtonProps)
                 >
                   Select Photo
                 </Button>
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   Choose a clear photo of your plant
                 </p>
               </div>

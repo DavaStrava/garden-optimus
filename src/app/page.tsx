@@ -70,14 +70,14 @@ export default async function Home() {
   ]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-muted/50">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+          <h1 className="text-3xl font-bold text-foreground">
             Welcome back, {session.user.name?.split(" ")[0] || "Gardener"}!
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-muted-foreground mt-1">
             Here&apos;s an overview of your garden
           </p>
         </div>
@@ -150,12 +150,12 @@ export default async function Home() {
                       </CardHeader>
                       <CardContent>
                         {plant.area && (
-                          <p className="text-sm text-gray-500">{plant.area}</p>
+                          <p className="text-sm text-muted-foreground">{plant.area}</p>
                         )}
                         {plant.careSchedules?.[0] && (
                           <WaterStatusIndicator nextDueDate={plant.careSchedules[0].nextDueDate} />
                         )}
-                        <div className="flex gap-4 mt-2 text-xs text-gray-500">
+                        <div className="flex gap-4 mt-2 text-xs text-muted-foreground/70">
                           <span>{plant._count.careLogs} care logs</span>
                           <span>{plant._count.assessments} assessments</span>
                         </div>
@@ -167,7 +167,7 @@ export default async function Home() {
             ) : (
               <Card>
                 <CardContent className="py-8 text-center">
-                  <p className="text-gray-500 mb-4">You haven&apos;t added any plants yet</p>
+                  <p className="text-muted-foreground mb-4">You haven&apos;t added any plants yet</p>
                   <Button asChild>
                     <Link href="/plants/new">Add Your First Plant</Link>
                   </Button>
@@ -206,7 +206,7 @@ export default async function Home() {
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-medium">{log.plant.name}</p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-muted-foreground/70">
                             {log.type.charAt(0) + log.type.slice(1).toLowerCase().replace("_", " ")}
                             {" • "}
                             {new Date(log.loggedAt).toLocaleDateString()}
@@ -216,7 +216,7 @@ export default async function Home() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-center py-4">No recent activity</p>
+                  <p className="text-muted-foreground text-center py-4">No recent activity</p>
                 )}
               </CardContent>
             </Card>
@@ -230,10 +230,10 @@ export default async function Home() {
                       <Link
                         key={assessment.id}
                         href={`/plants/${assessment.plantId}`}
-                        className="block p-2 -mx-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800"
+                        className="block p-2 -mx-2 rounded hover:bg-accent"
                       >
                         <p className="text-sm font-medium">{assessment.plant.name}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted-foreground/70">
                           {assessment.healthStatus} •{" "}
                           {new Date(assessment.assessedAt).toLocaleDateString()}
                         </p>

@@ -181,7 +181,7 @@ export function DeletedPlantsSection() {
                       <div>
                         <CardTitle className="text-lg">{plant.name}</CardTitle>
                         {plant.nickname && (
-                          <p className="text-sm text-gray-500">&quot;{plant.nickname}&quot;</p>
+                          <p className="text-sm text-muted-foreground">&quot;{plant.nickname}&quot;</p>
                         )}
                         {plant.species && (
                           <CardDescription>{plant.species.commonName}</CardDescription>
@@ -197,7 +197,7 @@ export function DeletedPlantsSection() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-xs text-gray-500 mb-3">
+                    <p className="text-xs text-muted-foreground/70 mb-3">
                       Deleted {new Date(plant.deletedAt).toLocaleDateString()}
                     </p>
                     <div className="flex gap-2">

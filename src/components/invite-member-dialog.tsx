@@ -113,13 +113,13 @@ export function InviteMemberDialog({ gardenId }: InviteMemberDialogProps) {
                   <SelectItem value="VIEWER">
                     <div>
                       <p className="font-medium">Viewer</p>
-                      <p className="text-xs text-gray-500">Can view garden and plants</p>
+                      <p className="text-xs text-muted-foreground">Can view garden and plants</p>
                     </div>
                   </SelectItem>
                   <SelectItem value="ADMIN">
                     <div>
                       <p className="font-medium">Admin</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         Can add/remove plants and edit garden
                       </p>
                     </div>

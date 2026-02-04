@@ -98,14 +98,14 @@ export function GardenPlantPicker({ gardenId, availablePlants }: GardenPlantPick
 
         <div className="space-y-3 py-4">
           {availablePlants.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-4">
+            <p className="text-sm text-muted-foreground text-center py-4">
               All your plants are already in gardens or you don&apos;t have any plants yet.
             </p>
           ) : (
             availablePlants.map((plant) => (
               <div
                 key={plant.id}
-                className="flex items-center space-x-3 p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800"
+                className="flex items-center space-x-3 p-2 rounded hover:bg-accent"
               >
                 <Checkbox
                   id={plant.id}
@@ -115,7 +115,7 @@ export function GardenPlantPicker({ gardenId, availablePlants }: GardenPlantPick
                 <Label htmlFor={plant.id} className="flex-1 cursor-pointer">
                   <span className="font-medium">{plant.name}</span>
                   {plant.species && (
-                    <span className="text-sm text-gray-500 ml-2">
+                    <span className="text-sm text-muted-foreground ml-2">
                       ({plant.species.commonName})
                     </span>
                   )}

@@ -17,7 +17,7 @@ export default async function RegistrationClosedPage() {
   const max = getMaxUsers();
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-muted/50">
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 text-5xl">🌱</div>
@@ -27,12 +27,12 @@ export default async function RegistrationClosedPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             We&apos;re limiting early access to ensure the best experience for
             our users. Thank you for your interest in Garden Optimus!
           </p>
           {remaining === 0 && (
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <p className="text-sm font-medium text-foreground/80">
               All slots are currently filled. Please check back later as spots
               may open up.
             </p>

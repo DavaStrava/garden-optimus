@@ -115,7 +115,7 @@ export function GardenMemberList({
       <CardContent>
         <div className="space-y-4">
           {/* Owner */}
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
             <div className="flex items-center gap-3">
               <Avatar>
                 <AvatarImage src={owner.image || ""} />
@@ -127,11 +127,11 @@ export function GardenMemberList({
                 <p className="font-medium">
                   {owner.name || owner.email}
                   {owner.id === currentUserId && (
-                    <span className="text-sm text-gray-500 ml-2">(you)</span>
+                    <span className="text-sm text-muted-foreground ml-2">(you)</span>
                   )}
                 </p>
                 {owner.name && owner.email && (
-                  <p className="text-sm text-gray-500">{owner.email}</p>
+                  <p className="text-sm text-muted-foreground">{owner.email}</p>
                 )}
               </div>
             </div>
@@ -142,7 +142,7 @@ export function GardenMemberList({
           {members.map((member) => (
             <div
               key={member.id}
-              className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+              className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
             >
               <div className="flex items-center gap-3">
                 <Avatar>
@@ -155,11 +155,11 @@ export function GardenMemberList({
                   <p className="font-medium">
                     {member.user.name || member.user.email}
                     {member.user.id === currentUserId && (
-                      <span className="text-sm text-gray-500 ml-2">(you)</span>
+                      <span className="text-sm text-muted-foreground ml-2">(you)</span>
                     )}
                   </p>
                   {member.user.name && member.user.email && (
-                    <p className="text-sm text-gray-500">{member.user.email}</p>
+                    <p className="text-sm text-muted-foreground">{member.user.email}</p>
                   )}
                 </div>
               </div>
@@ -207,7 +207,7 @@ export function GardenMemberList({
           ))}
 
           {members.length === 0 && (
-            <p className="text-center text-gray-500 py-4">
+            <p className="text-center text-muted-foreground py-4">
               No other members yet
               {canManage && ". Use the invite button to add people."}
             </p>

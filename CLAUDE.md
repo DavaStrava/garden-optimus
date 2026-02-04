@@ -9,7 +9,7 @@ Garden Optimus is a plant care management web application that helps users track
 ## Tech Stack
 - **Framework**: Next.js 14+ (App Router) with TypeScript
 - **Database**: PostgreSQL with Prisma ORM (v6)
-- **Styling**: Tailwind CSS v4 + shadcn/ui components
+- **Styling**: Tailwind CSS v4 + shadcn/ui components (green/earth-toned OKLCH theme)
 - **Authentication**: NextAuth.js v5 (beta) with OAuth (Google/GitHub)
 - **AI**: Anthropic Claude API for plant health analysis and species identification
 - **Search**: Fuse.js for fuzzy species matching
@@ -246,6 +246,55 @@ Interactive components use `"use client"` directive:
 - Dialogs and modals
 - File uploads
 - Components using `useRouter`, `useState`, etc.
+
+## Design System / Color Scheme
+
+The app uses a garden-themed green/earth-toned color palette defined via OKLCH CSS variables in `src/app/globals.css`. All colors flow through Tailwind CSS theme tokens — components should never use hardcoded color classes.
+
+### Color Architecture
+
+Colors are defined as OKLCH values (lightness, chroma, hue) in CSS custom properties. The hue `150` is forest green; `145` is a slightly warmer sage; `85` is a warm tan/sand tone used for secondary accents.
+
+**Key colors:**
+- **Primary**: Forest green (`oklch(0.42 0.15 150)` light / `oklch(0.70 0.14 150)` dark) — buttons, links, focus rings
+- **Background**: Subtle green-cream tint, not pure white
+- **Cards/Popovers**: Barely-there warm green tint
+- **Muted**: Light sage for secondary backgrounds
+- **Accent**: Soft green for hover states
+- **Destructive**: Red — unchanged, stays for danger actions
+
+### Text Color Hierarchy
+
+Use three tiers for text to maintain visual hierarchy:
+
+| Tier | Class | Usage |
+|------|-------|-------|
+| Primary | `text-foreground` | Headings, important content, body text |
+| Secondary | `text-muted-foreground` | Labels, descriptions, secondary info |
+| Tertiary | `text-muted-foreground/70` | Timestamps, character counters, count metadata |
+
+### Theme Token Usage
+
+**Always use theme tokens instead of hardcoded Tailwind color classes:**
+
+| Instead of | Use |
+|------------|-----|
+| `bg-gray-50 dark:bg-gray-900` | `bg-muted/50` |
+| `bg-white dark:bg-gray-950` | `bg-card` or `bg-primary/5` |
+| `text-gray-500` | `text-muted-foreground` |
+| `text-gray-900 dark:text-gray-100` | `text-foreground` |
+| `text-gray-400` | `text-muted-foreground/70` |
+| `hover:bg-gray-50 dark:hover:bg-gray-800` | `hover:bg-accent` |
+| `border-gray-200` | `border-border` |
+| `bg-green-600` | `bg-primary` |
+
+### What NOT to Change
+
+These use functional/status colors that must remain distinct from the green primary:
+- **Status badges**: Red (overdue), orange (due today), blue (due soon) in `water-status-indicator.tsx` and `reminder-status-badge.tsx`
+- **AI confidence colors**: Green/yellow/red in `species-match-picker.tsx`
+- **Destructive variant**: Red for delete/danger actions
+- **Chart colors**: Keep as-is for visual differentiation
 
 ## Adding New Features
 

@@ -14,7 +14,7 @@ export default async function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-green-50 to-green-100 dark:from-green-950 dark:to-green-900">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/20">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 text-5xl">🌱</div>
@@ -35,7 +35,7 @@ export default async function LoginPage() {
                   });
                 }}
               >
-                <Button className="w-full bg-green-600 hover:bg-green-700" type="submit">
+                <Button className="w-full bg-primary hover:bg-primary/90" type="submit">
                   Dev Login (No OAuth Required)
                 </Button>
               </form>

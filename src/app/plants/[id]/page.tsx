@@ -56,7 +56,7 @@ export default async function PlantDetailPage({
   }));
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-muted/50">
       <Header />
       <main className="container mx-auto px-4 py-8">
         {/* Back Navigation */}
@@ -78,10 +78,10 @@ export default async function PlantDetailPage({
               </Badge>
             </div>
             {plant.nickname && (
-              <p className="text-gray-500 mt-1">&quot;{plant.nickname}&quot;</p>
+              <p className="text-muted-foreground mt-1">&quot;{plant.nickname}&quot;</p>
             )}
             {plant.species && (
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-muted-foreground">
                 {plant.species.commonName}
                 {plant.species.scientificName && (
                   <span className="italic ml-1">({plant.species.scientificName})</span>
@@ -129,7 +129,7 @@ export default async function PlantDetailPage({
                     {plant.careLogs.length > 0 ? (
                       <div className="space-y-4">
                         {plant.careLogs.map((log) => (
-                          <div key={log.id} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                          <div key={log.id} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
                             <div className="text-2xl">
                               {log.type === "WATERING" && "💧"}
                               {log.type === "FERTILIZING" && "🌿"}
@@ -143,12 +143,12 @@ export default async function PlantDetailPage({
                                 {log.type.charAt(0) + log.type.slice(1).toLowerCase().replace("_", " ")}
                               </p>
                               {log.amount && (
-                                <p className="text-sm text-gray-500">Amount: {log.amount}</p>
+                                <p className="text-sm text-muted-foreground">Amount: {log.amount}</p>
                               )}
                               {log.notes && (
-                                <p className="text-sm text-gray-600 mt-1">{log.notes}</p>
+                                <p className="text-sm text-muted-foreground mt-1">{log.notes}</p>
                               )}
-                              <p className="text-xs text-gray-400 mt-1">
+                              <p className="text-xs text-muted-foreground/70 mt-1">
                                 {new Date(log.loggedAt).toLocaleString()}
                               </p>
                             </div>
@@ -156,7 +156,7 @@ export default async function PlantDetailPage({
                         ))}
                       </div>
                     ) : (
-                      <p className="text-gray-500 text-center py-4">No care logs yet</p>
+                      <p className="text-muted-foreground text-center py-4">No care logs yet</p>
                     )}
                   </CardContent>
                 </Card>
@@ -187,20 +187,20 @@ export default async function PlantDetailPage({
                               >
                                 {assessment.healthStatus}
                               </Badge>
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-muted-foreground/70">
                                 {new Date(assessment.assessedAt).toLocaleString()}
                               </span>
                             </div>
                             {assessment.issues && (
                               <div className="mb-2">
                                 <p className="text-sm font-medium">Issues identified:</p>
-                                <p className="text-sm text-gray-600">{assessment.issues}</p>
+                                <p className="text-sm text-muted-foreground">{assessment.issues}</p>
                               </div>
                             )}
                             {assessment.recommendations && (
                               <div>
                                 <p className="text-sm font-medium">Recommendations:</p>
-                                <p className="text-sm text-gray-600">{assessment.recommendations}</p>
+                                <p className="text-sm text-muted-foreground">{assessment.recommendations}</p>
                               </div>
                             )}
                           </div>
@@ -208,7 +208,7 @@ export default async function PlantDetailPage({
                       </div>
                     ) : (
                       <div className="text-center py-8">
-                        <p className="text-gray-500 mb-4">No health assessments yet</p>
+                        <p className="text-muted-foreground mb-4">No health assessments yet</p>
                         <HealthAssessmentButton plantId={plant.id} />
                       </div>
                     )}
@@ -246,13 +246,13 @@ export default async function PlantDetailPage({
               <CardContent className="space-y-4">
                 {plant.area && (
                   <div>
-                    <p className="text-sm text-gray-500">Location</p>
+                    <p className="text-sm text-muted-foreground">Location</p>
                     <p className="font-medium">{plant.area}</p>
                   </div>
                 )}
                 {plant.acquiredAt && (
                   <div>
-                    <p className="text-sm text-gray-500">Date Acquired</p>
+                    <p className="text-sm text-muted-foreground">Date Acquired</p>
                     <p className="font-medium">
                       {new Date(plant.acquiredAt).toLocaleDateString()}
                     </p>
@@ -260,7 +260,7 @@ export default async function PlantDetailPage({
                 )}
                 {plant.notes && (
                   <div>
-                    <p className="text-sm text-gray-500">Notes</p>
+                    <p className="text-sm text-muted-foreground">Notes</p>
                     <p className="text-sm">{plant.notes}</p>
                   </div>
                 )}
@@ -277,41 +277,41 @@ export default async function PlantDetailPage({
                 <CardContent className="space-y-4">
                   {plant.species.description && (
                     <div>
-                      <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                      <p className="text-sm text-foreground/80 leading-relaxed">
                         {plant.species.description}
                       </p>
                       <Separator className="my-4" />
                     </div>
                   )}
                   <div>
-                    <p className="text-sm text-gray-500">Light</p>
+                    <p className="text-sm text-muted-foreground">Light</p>
                     <p className="font-medium">{plant.species.lightNeeds}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Water</p>
+                    <p className="text-sm text-muted-foreground">Water</p>
                     <p className="font-medium">{plant.species.waterFrequency}</p>
                   </div>
                   {plant.species.humidity && (
                     <div>
-                      <p className="text-sm text-gray-500">Humidity</p>
+                      <p className="text-sm text-muted-foreground">Humidity</p>
                       <p className="font-medium">{plant.species.humidity}</p>
                     </div>
                   )}
                   {plant.species.temperature && (
                     <div>
-                      <p className="text-sm text-gray-500">Temperature</p>
+                      <p className="text-sm text-muted-foreground">Temperature</p>
                       <p className="font-medium">{plant.species.temperature}</p>
                     </div>
                   )}
                   {plant.species.toxicity && (
                     <div>
-                      <p className="text-sm text-gray-500">Toxicity</p>
+                      <p className="text-sm text-muted-foreground">Toxicity</p>
                       <p className="font-medium">{plant.species.toxicity}</p>
                     </div>
                   )}
                   {plant.species.careNotes && (
                     <div>
-                      <p className="text-sm text-gray-500">Care Notes</p>
+                      <p className="text-sm text-muted-foreground">Care Notes</p>
                       <p className="text-sm">{plant.species.careNotes}</p>
                     </div>
                   )}
